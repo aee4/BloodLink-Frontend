@@ -1,5 +1,6 @@
 using BloodLink.Web.Models;
 using BloodLink.Web.Services.Authentication;
+using System.Net;
 
 namespace BloodLink.Web.Services.Api;
 
@@ -8,7 +9,16 @@ public sealed class AuthApiClient(HttpClient http, SessionStore session) : Backe
     public async Task<ApiUser> Login(string email, string password, CancellationToken cancellationToken = default)
     {
         var response = await Post<LoginBody, TokenResponse>("api/v1/auth/login", new(email, password), cancellationToken);
-        session.Set(response.AccessToken, response.User);
+        try
+        {
+            await session.SetAsync(response.AccessToken, response.RefreshToken, response.User, cancellationToken);
+        }
+        catch
+        {
+            try { await session.ClearAsync(cancellationToken); }
+            catch { session.Clear(); }
+            throw new ApiException(HttpStatusCode.ServiceUnavailable, "Secure session storage is unavailable. Try again later.");
+        }
         return response.User;
     }
 
@@ -17,13 +27,18 @@ public sealed class AuthApiClient(HttpClient http, SessionStore session) : Backe
     public async Task Logout(CancellationToken cancellationToken = default)
     {
         try { await Post("api/v1/auth/logout", cancellationToken); }
-        finally { session.Clear(); }
+        finally
+        {
+            try { await session.ClearAsync(cancellationToken); }
+            catch { session.Clear(); }
+        }
     }
 
     public async Task ChangePassword(string current, string next, CancellationToken cancellationToken = default)
     {
         await Post("api/v1/auth/change-password", new { currentPassword = current, newPassword = next }, cancellationToken);
-        session.Clear();
+        try { await session.ClearAsync(cancellationToken); }
+        catch { session.Clear(); }
     }
 
     private sealed record LoginBody(string Email, string Password);

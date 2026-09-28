@@ -13,8 +13,13 @@ var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? "http://localhost:5249/
 if (!Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out var apiUri) || apiUri.Scheme is not ("http" or "https"))
     throw new InvalidOperationException("Api:BaseUrl must be an absolute HTTP or HTTPS URL.");
 builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<ISessionMaterialStore, BrowserSessionMaterialStore>();
 builder.Services.AddScoped<SessionStore>();
 builder.Services.AddScoped<AuthenticationStateProvider, FrontendAuthenticationStateProvider>();
+builder.Services.AddScoped(sp => new SessionRefreshService(
+    new HttpClient(new HttpClientHandler()) { BaseAddress = apiUri },
+    sp.GetRequiredService<SessionStore>()));
+builder.Services.AddScoped<SessionRestoreService>();
 builder.Services.AddScoped<BearerHandler>();
 builder.Services.AddScoped(sp =>
 {

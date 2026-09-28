@@ -3,15 +3,47 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace BloodLink.Web.Services.Authentication;
 
-public sealed class SessionStore
+public sealed class SessionStore(ISessionMaterialStore? materialStore = null)
 {
     public string? AccessToken { get; private set; }
+    public string? RefreshToken { get; private set; }
     public Models.ApiUser? User { get; private set; }
     public event Action? Changed;
 
     public void Set(string token, Models.ApiUser user)
     {
         AccessToken = token;
+        RefreshToken = null;
+        User = user;
+        Changed?.Invoke();
+    }
+
+    public void Set(string token, string refreshToken, Models.ApiUser user)
+    {
+        AccessToken = token;
+        RefreshToken = refreshToken;
+        User = user;
+        Changed?.Invoke();
+    }
+
+    public async Task SetAsync(string token, string refreshToken, Models.ApiUser user,
+        CancellationToken cancellationToken = default)
+    {
+        if (materialStore is not null)
+            await materialStore.WriteRefreshTokenAsync(refreshToken, cancellationToken);
+        AccessToken = token;
+        RefreshToken = refreshToken;
+        User = user;
+        Changed?.Invoke();
+    }
+
+    public Task<string?> ReadStoredRefreshTokenAsync(CancellationToken cancellationToken = default) =>
+        materialStore?.ReadRefreshTokenAsync(cancellationToken) ?? Task.FromResult<string?>(null);
+
+    public void SetRefreshToken(string refreshToken) => RefreshToken = refreshToken;
+
+    public void UpdateUser(Models.ApiUser user)
+    {
         User = user;
         Changed?.Invoke();
     }
@@ -19,8 +51,16 @@ public sealed class SessionStore
     public void Clear()
     {
         AccessToken = null;
+        RefreshToken = null;
         User = null;
         Changed?.Invoke();
+    }
+
+    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        Clear();
+        if (materialStore is not null)
+            await materialStore.ClearAsync(cancellationToken);
     }
 
     public ClaimsPrincipal Principal

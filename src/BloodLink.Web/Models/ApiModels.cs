@@ -10,7 +10,8 @@ public enum BloodRequestStatus { Sent, Accepted, Rejected, Fulfilled, Cancelled 
 
 public sealed record ApiUser(string Id, string Email, string FirstName, string LastName, Guid? FacilityId,
     IReadOnlyList<string> Roles, FacilityStatus? FacilityStatus, bool MustChangePassword);
-public sealed record TokenResponse(string AccessToken, string TokenType, int ExpiresIn, ApiUser User);
+public sealed record TokenResponse(string AccessToken, string TokenType, int ExpiresIn,
+    string RefreshToken, DateTime RefreshTokenExpiresAtUtc, ApiUser User);
 public sealed record FacilityDto(Guid Id, string Name, FacilityType FacilityType, string RegistrationNumber,
     string Region, string City, string Address, string ContactEmail, string ContactPhone, FacilityStatus Status,
     string? RejectionReason, DateTime CreatedAtUtc, DateTime? ApprovedAtUtc);

@@ -1,10 +1,11 @@
 # API Integration Checklist
 
-Contract source: BloodLink Backend commit `eee5de2a4924dde5be7aa2452eb3804a277c7ba7`, especially `docs/API_CONTRACTS.md`, `docs/AUTHENTICATION.md`, controller routes and API contract records. Base URL is configured by public `Api:BaseUrl`; local development uses `http://localhost:5249/`. The backend must allow the frontend origin.
+Contract source: BloodLink Backend session-refresh release, especially `docs/API_CONTRACTS.md`, `docs/AUTHENTICATION.md`, controller routes and API contract records. Base URL is configured by public `Api:BaseUrl`; local development uses `http://localhost:5249/`. The backend must allow the exact frontend origin.
 
 | Backend endpoint | Frontend client / screen | Status |
 |---|---|---|
 | `POST /api/v1/auth/login` | AuthApiClient / account login | Integrated |
+| `POST /api/v1/auth/refresh` | SessionRefreshService / startup and 401 recovery | Integrated; rotates refresh credentials |
 | `GET /api/v1/auth/me` | AuthApiClient.Current | Client available |
 | `POST /api/v1/auth/logout` | AuthApiClient / sidebar | Integrated |
 | `POST /api/v1/auth/change-password` | AuthApiClient / account | Integrated |
