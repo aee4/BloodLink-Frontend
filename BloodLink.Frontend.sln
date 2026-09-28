@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A9EE1814-E78A-4046-86F6-C9BDC30F2403}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodLink.Web", "src\BloodLink.Web\BloodLink.Web.csproj", "{3A96D529-9355-43F2-96BD-F1A7B1D72DC9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{53A06A95-6052-40A6-926B-3FA944A4FF77}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloodLink.Web.Tests", "tests\BloodLink.Web.Tests\BloodLink.Web.Tests.csproj", "{2FD388EE-6B02-4DEA-A5AF-42D55239580B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3A96D529-9355-43F2-96BD-F1A7B1D72DC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A96D529-9355-43F2-96BD-F1A7B1D72DC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A96D529-9355-43F2-96BD-F1A7B1D72DC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A96D529-9355-43F2-96BD-F1A7B1D72DC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FD388EE-6B02-4DEA-A5AF-42D55239580B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FD388EE-6B02-4DEA-A5AF-42D55239580B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FD388EE-6B02-4DEA-A5AF-42D55239580B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FD388EE-6B02-4DEA-A5AF-42D55239580B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3A96D529-9355-43F2-96BD-F1A7B1D72DC9} = {A9EE1814-E78A-4046-86F6-C9BDC30F2403}
+		{2FD388EE-6B02-4DEA-A5AF-42D55239580B} = {53A06A95-6052-40A6-926B-3FA944A4FF77}
+	EndGlobalSection
+EndGlobal

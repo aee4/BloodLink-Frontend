@@ -1,0 +1,55 @@
+@inject AuthApiClient Auth
+@inject NavigationManager Navigation
+
+<aside class="bl-sidebar" aria-label="Main navigation">
+    <div class="bl-sidebar-brand"><span class="bl-sidebar-logo" aria-hidden="true">B</span><div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@User?.Email</span></div></div>
+    <nav class="bl-sidebar-nav">
+        <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><span aria-hidden="true">▦</span><span>Dashboard</span></NavLink>
+        @if (IsSystem)
+        {
+            <NavLink class="bl-nav-item" href="/system/facilities"><span aria-hidden="true">⌂</span><span>Facilities</span></NavLink>
+        }
+        @if (!IsSystem)
+        {
+            <NavLink class="bl-nav-item" href="/inventory"><span aria-hidden="true">▤</span><span>Inventory</span></NavLink>
+            <div class="bl-nav-sub">
+                @if (IsAdmin)
+                {
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/adjust">Adjust stock</NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/history">History</NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/search">Find stock</NavLink>
+                    <NavLink class="bl-nav-item" href="/needs">Facility needs</NavLink>
+                    <NavLink class="bl-nav-item" href="/requests/sent">Requests sent</NavLink>
+                    <NavLink class="bl-nav-item" href="/requests/received">Requests received</NavLink>
+                    <NavLink class="bl-nav-item" href="/facility/staff">Staff</NavLink>
+                    <NavLink class="bl-nav-item" href="/facility/profile">Facility profile</NavLink>
+                }
+                else
+                {
+                    <NavLink class="bl-nav-item" href="/needs/new">Submit need</NavLink>
+                    <NavLink class="bl-nav-item" href="/needs/mine">My needs</NavLink>
+                }
+            </div>
+        }
+        <NavLink class="bl-nav-item" href="/notifications"><span aria-hidden="true">♧</span><span>Notifications</span></NavLink>
+        <NavLink class="bl-nav-item" href="/account/manage"><span aria-hidden="true">◉</span><span>Account</span></NavLink>
+    </nav>
+    <div class="bl-sidebar-user">
+        <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
+        <button type="button" class="bl-nav-item bl-nav-signout" @onclick="SignOut">Sign out</button>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public ApiUser? User { get; set; }
+    private bool IsSystem => User?.Roles.Contains("SystemAdmin") == true;
+    private bool IsAdmin => User?.Roles.Contains("FacilityAdmin") == true;
+    private string RoleName => IsSystem ? "System Admin" : IsAdmin ? "Facility Admin" : "Facility Staff";
+    private string Initials => $"{(User?.FirstName ?? "B").FirstOrDefault()}{(User?.LastName ?? "L").FirstOrDefault()}".ToUpperInvariant();
+
+    private async Task SignOut()
+    {
+        try { await Auth.Logout(); } catch (ApiException) { }
+        Navigation.NavigateTo("/account/login?signedOut=true", forceLoad: true);
+    }
+}

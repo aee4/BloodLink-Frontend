@@ -1,0 +1,44 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+@inject AuthApiClient Auth
+@inject NavigationManager Navigation
+
+<PageTitle>Sign in | BloodLink</PageTitle>
+<section class="bl-auth-page"><aside class="bl-auth-aside"><a class="bl-brand bl-brand-dark" href="/">BloodLink</a><div class="bl-auth-aside-copy"><blockquote>Better coordination for every unit of blood.</blockquote><p>Facility teams can manage stock, urgent needs and requests from one workspace.</p></div><p class="bl-auth-copyright">BloodLink operations</p></aside><div class="bl-auth-content"><div class="bl-auth-panel">
+    <a class="bl-brand bl-auth-mobile-brand" href="/">BloodLink</a><h1>Sign in</h1>
+    <Feedback Message="@Message" Variant="@Variant" />
+    <form @onsubmit="Submit" @onsubmit:preventDefault>
+        <label for="email">Email</label><input id="email" type="email" autocomplete="username" required @bind="Email" />
+        <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required @bind="Password" />
+        <button class="bl-button bl-button-primary" type="submit" disabled="@Busy">@(Busy ? "Signing in…" : "Sign in")</button>
+    </form>
+    <p>Password recovery is currently unavailable. Contact your facility administrator.</p>
+    <a href="/facilities/register">Register a facility</a>
+</div></div></section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery(Name = "signedOut")] public string? SignedOut { get; set; }
+    private string Email { get; set; } = "";
+    private string Password { get; set; } = "";
+    private string? Message { get; set; }
+    private string Variant { get; set; } = "danger";
+    private bool Busy { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (SignedOut == "true") { Message = "You have signed out."; Variant = "success"; }
+    }
+
+    private async Task Submit()
+    {
+        Busy = true; Message = null;
+        try
+        {
+            await Auth.Login(Email.Trim(), Password);
+            Navigation.NavigateTo(ReturnPath.LocalOrDashboard(ReturnUrl));
+        }
+        catch (ApiException ex) { Message = ex.Message; }
+        finally { Busy = false; Password = ""; }
+    }
+}

@@ -1,0 +1,15 @@
+@inherits LayoutComponentBase
+@inject SessionStore Session
+
+<AuthorizeView>
+    <Authorized>
+        <div class="bl-app">
+            <a class="bl-skip-link" href="#main-content">Skip to main content</a>
+            <DashboardSidebar User="Session.User" />
+            <main class="bl-app-main" id="main-content">
+                <div class="bl-app-content">@Body</div>
+            </main>
+        </div>
+    </Authorized>
+    <NotAuthorized>@Body</NotAuthorized>
+</AuthorizeView>

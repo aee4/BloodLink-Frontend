@@ -1,0 +1,65 @@
+@page "/facilities/register"
+@page "/facility/register"
+@attribute [AllowAnonymous]
+@inject FacilityApiClient Facilities
+
+<PageTitle>Register a facility | BloodLink</PageTitle>
+<section class="bl-page bl-public-form">
+    <a class="bl-brand" href="/">BloodLink</a><h1>Register your facility</h1>
+    @if (Submitted is not null)
+    {
+        <div class="bl-alert bl-alert-success" role="status">
+            <h2>Registration received</h2>
+            @if (Submitted.Status == FacilityStatus.Approved)
+            { <p>This Development facility is approved and ready to use. Sign in with the administrator account you created.</p> }
+            else
+            { <p>Your facility is pending approval. You can sign in after a System Admin reviews the registration.</p> }
+        </div>
+        <a class="bl-button bl-button-primary" href="/account/login">Continue to sign in</a>
+    }
+    else
+    {
+        <Feedback Message="@Message" />
+        <form class="bl-form-grid" @onsubmit="Submit" @onsubmit:preventDefault>
+            <label>Facility name<input required maxlength="200" @bind="Form.Name" /></label>
+            <label>Facility type<select @bind="Form.FacilityType"><option value="0">Hospital</option><option value="1">Blood bank</option></select></label>
+            <label>Registration number<input required maxlength="100" @bind="Form.RegistrationNumber" /></label>
+            <label>Region<input required maxlength="100" @bind="Form.Region" /></label>
+            <label>City<input required maxlength="100" @bind="Form.City" /></label>
+            <label>Address<input required maxlength="500" @bind="Form.Address" /></label>
+            <label>Facility contact email<input type="email" required @bind="Form.ContactEmail" /></label>
+            <label>Facility contact phone<input type="tel" required @bind="Form.ContactPhone" /></label>
+            <h2>Facility administrator</h2>
+            <label>First name<input required @bind="Form.AdminFirstName" /></label>
+            <label>Last name<input required @bind="Form.AdminLastName" /></label>
+            <label>Administrator email<input type="email" required @bind="Form.AdminEmail" /></label>
+            <label>Administrator phone<input type="tel" required @bind="Form.AdminPhoneNumber" /></label>
+            <label>Password<input type="password" required autocomplete="new-password" minlength="12" @bind="Form.AdminPassword" aria-describedby="password-requirements" /></label>
+            <p id="password-requirements">Use at least 12 characters and meet the password policy shown by your administrator.</p>
+            <button class="bl-button bl-button-primary" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button>
+        </form>
+    }
+</section>
+
+@code {
+    private RegistrationForm Form { get; set; } = new();
+    private FacilityDto? Submitted { get; set; }
+    private string? Message { get; set; }
+    private bool Busy { get; set; }
+    private async Task Submit()
+    {
+        Busy = true; Message = null;
+        try { Submitted = await Facilities.Register(new(Form.Name, Form.FacilityType, Form.RegistrationNumber, Form.Region, Form.City, Form.Address, Form.ContactEmail, Form.ContactPhone, Form.AdminFirstName, Form.AdminLastName, Form.AdminEmail, Form.AdminPhoneNumber, Form.AdminPassword)); Form.AdminPassword = ""; }
+        catch (ApiException ex) { Message = ex.Message; }
+        finally { Busy = false; }
+    }
+
+    private sealed class RegistrationForm
+    {
+        public string Name { get; set; } = ""; public FacilityType FacilityType { get; set; } public string RegistrationNumber { get; set; } = "";
+        public string Region { get; set; } = ""; public string City { get; set; } = ""; public string Address { get; set; } = "";
+        public string ContactEmail { get; set; } = ""; public string ContactPhone { get; set; } = ""; public string AdminFirstName { get; set; } = "";
+        public string AdminLastName { get; set; } = ""; public string AdminEmail { get; set; } = ""; public string AdminPhoneNumber { get; set; } = "";
+        public string AdminPassword { get; set; } = "";
+    }
+}

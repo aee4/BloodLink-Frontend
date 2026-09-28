@@ -1,0 +1,9 @@
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="bl-alert bl-alert-@Variant" role="@(Variant == "danger" ? "alert" : "status")">@Message</div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string Variant { get; set; } = "info";
+}

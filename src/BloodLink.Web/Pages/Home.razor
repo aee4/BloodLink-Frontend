@@ -1,0 +1,22 @@
+@page "/"
+@attribute [AllowAnonymous]
+@inject SessionStore Session
+@inject NavigationManager Navigation
+
+<PageTitle>BloodLink | Blood supply coordination</PageTitle>
+<main class="bl-public-home">
+    <header class="bl-public-header"><a class="bl-brand" href="/">BloodLink</a><nav aria-label="Account"><a href="/facilities/register">Register facility</a><a class="bl-button bl-button-primary" href="/account/login">Sign in</a></nav></header>
+    <section class="bl-home-content">
+        <p class="bl-eyebrow">Blood supply coordination</p>
+        <h1>Connect the need.<br />Move blood where it matters.</h1>
+        <p>Coordinate facility inventory, urgent needs and requests through one shared operational workspace.</p>
+        <div class="bl-home-actions"><a class="bl-button bl-button-primary" href="/account/login">Sign in to BloodLink</a><a class="bl-button bl-button-secondary" href="/facilities/register">Register a facility</a></div>
+    </section>
+</main>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (Session.User is not null) Navigation.NavigateTo("/dashboard");
+    }
+}
