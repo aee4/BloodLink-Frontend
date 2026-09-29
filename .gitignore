@@ -5,6 +5,7 @@ obj/
 TestResults/
 coverage/
 artifacts/ui-parity/
+scripts/verification/node_modules/
 *.user
 *.suo
 *.log

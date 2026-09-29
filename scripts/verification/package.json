@@ -1,0 +1,13 @@
+{
+  "name": "bloodlink-production-verification",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify:public": "node verify-public.mjs",
+    "verify:authenticated": "powershell -ExecutionPolicy Bypass -File ./verify-authenticated.ps1",
+    "verify:service-worker": "node verify-service-worker-cleanup.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}

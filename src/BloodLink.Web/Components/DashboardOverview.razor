@@ -54,7 +54,7 @@ else if (IsFacilityAdmin)
                     {
                         <a class="bl-dash-row" href="@($"/needs/{Text(item, "id")}")">
                             <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="droplet" Size="16" /></span>
-                            <span class="bl-dash-row-main"><strong>@Text(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Text(item, "urgency") · @Text(item, "status")</small></span>
+                            <span class="bl-dash-row-main"><strong>@Blood(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Urgency(item) · @NeedStatus(item)</small></span>
                             <AppIcon Name="chevron-right" Size="16" />
                         </a>
                     }
@@ -82,7 +82,7 @@ else
                     {
                         <a class="bl-dash-row" href="@($"/needs/{Text(item, "id")}")">
                             <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="droplet" Size="16" /></span>
-                            <span class="bl-dash-row-main"><strong>@Text(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Text(item, "urgency") · @Text(item, "status")</small></span>
+                            <span class="bl-dash-row-main"><strong>@Blood(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Urgency(item) · @NeedStatus(item)</small></span>
                             <AppIcon Name="chevron-right" Size="16" />
                         </a>
                     }
@@ -116,4 +116,25 @@ else
         : "";
 
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "B" : name[..1].ToUpperInvariant();
+
+    private static string Blood(JsonElement item, string name)
+    {
+        if (!item.TryGetProperty(name, out var value)) return "Blood type";
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
+            return number is >= 0 and <= 7 ? new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" }[number] : "Blood type";
+        return value.ToString() switch { "APositive" => "A+", "ANegative" => "A-", "BPositive" => "B+", "BNegative" => "B-", "ABPositive" => "AB+", "ABNegative" => "AB-", "OPositive" => "O+", "ONegative" => "O-", _ => value.ToString() };
+    }
+
+    private static string Urgency(JsonElement item) => EnumLabel(item, "urgency", ["Routine", "Urgent", "Emergency"]);
+    private static string NeedStatus(JsonElement item) => EnumLabel(item, "status", ["Pending review", "Searching", "Fulfilled internally", "Fulfilled externally", "Rejected", "Cancelled"]);
+
+    private static string EnumLabel(JsonElement item, string name, string[] labels)
+    {
+        if (!item.TryGetProperty(name, out var value)) return "";
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) && number >= 0 && number < labels.Length)
+            return labels[number];
+        var raw = value.ToString();
+        if (int.TryParse(raw, out number) && number >= 0 && number < labels.Length) return labels[number];
+        return System.Text.RegularExpressions.Regex.Replace(raw, "(?<=[a-z])([A-Z])", " $1");
+    }
 }

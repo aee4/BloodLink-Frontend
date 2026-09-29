@@ -1,0 +1,11 @@
+<nav class="bl-table-pagination" aria-label="Pagination">
+    <span>Page @Page</span>
+    <button class="bl-btn bl-btn-outline" disabled="@(Page <= 1)" aria-label="Previous page" @onclick="() => PageChanged.InvokeAsync(Page - 1)">Previous</button>
+    <button class="bl-btn bl-btn-outline" disabled="@(!HasNext)" aria-label="Next page" @onclick="() => PageChanged.InvokeAsync(Page + 1)">Next</button>
+</nav>
+
+@code {
+    [Parameter] public int Page { get; set; }
+    [Parameter] public bool HasNext { get; set; }
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+}

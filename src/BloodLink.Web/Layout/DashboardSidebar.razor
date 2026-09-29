@@ -1,30 +1,31 @@
 @inject AuthApiClient Auth
 @inject NavigationManager Navigation
+@inject FacilityApiClient Facilities
 
-<aside class="bl-sidebar" aria-label="Main navigation" @onkeydown="HandleKeyDown">
+<aside class="bl-sidebar" data-current-path="@CurrentPath" aria-label="Main navigation" @onkeydown="HandleKeyDown">
     <div class="bl-sidebar-brand">
         <span class="bl-sidebar-logo" aria-hidden="true"><AppIcon Name="droplet" Size="16" Filled="true" /></span>
-        <div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@User?.Email</span></div>
-        <button class="bl-sidebar-toggle" type="button" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
+        <div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@(FacilityName ?? User?.Email)</span></div>
+        <button @ref="_menuToggle" class="bl-sidebar-toggle" type="button" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
                 aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="workspace-navigation" @onclick="ToggleMenu">
             <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="20" />
         </button>
     </div>
     <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" @onclick="CloseMenu">
-        <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><span aria-hidden="true">▦</span><span>Dashboard</span></NavLink>
+        <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><AppIcon Name="activity" Size="16" /><span>Dashboard</span></NavLink>
         @if (IsSystem)
         {
-            <NavLink class="bl-nav-item" href="/system/facilities"><span aria-hidden="true">⌂</span><span>Facilities</span></NavLink>
+            <NavLink class="bl-nav-item" href="/system/facilities"><AppIcon Name="building" Size="16" /><span>Facilities</span></NavLink>
         }
         @if (!IsSystem)
         {
-            <NavLink class="bl-nav-item" href="/inventory"><span aria-hidden="true">▤</span><span>Inventory</span></NavLink>
+            <NavLink class="bl-nav-item" href="/inventory"><AppIcon Name="package" Size="16" /><span>Inventory</span></NavLink>
             <div class="bl-nav-sub">
                 @if (IsAdmin)
                 {
                     <NavLink class="bl-nav-item bl-nav-child" href="/inventory/adjust">Adjust stock</NavLink>
                     <NavLink class="bl-nav-item bl-nav-child" href="/inventory/history">History</NavLink>
-                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/search">Find stock</NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/search">Network search</NavLink>
                     <NavLink class="bl-nav-item" href="/needs">Facility needs</NavLink>
                     <NavLink class="bl-nav-item" href="/requests/sent">Requests sent</NavLink>
                     <NavLink class="bl-nav-item" href="/requests/received">Requests received</NavLink>
@@ -33,14 +34,16 @@
                 }
                 else
                 {
-                    <NavLink class="bl-nav-item" href="/inventory" Match="NavLinkMatch.All"><span aria-hidden="true">▤</span><span>Inventory</span></NavLink>
                     <NavLink class="bl-nav-item" href="/needs/new">Submit need</NavLink>
-                    <NavLink class="bl-nav-item" href="/needs/mine">My needs</NavLink>
+                    <NavLink class="@(IsStaffNeedDetail ? "bl-nav-item active" : "bl-nav-item")" href="/needs/mine">My needs</NavLink>
                 }
             </div>
         }
-        <NavLink class="bl-nav-item" href="/notifications"><span aria-hidden="true">♧</span><span>Notifications</span></NavLink>
-        <NavLink class="bl-nav-item" href="/account/manage"><span aria-hidden="true">◉</span><span>Account</span></NavLink>
+        @if (!IsSystem)
+        {
+            <NavLink class="bl-nav-item" href="/notifications"><AppIcon Name="bell" Size="16" /><span>Notifications</span></NavLink>
+        }
+        <NavLink class="@(IsAccountPath ? "bl-nav-item active" : "bl-nav-item")" href="/account/manage"><AppIcon Name="user" Size="16" /><span>Account</span></NavLink>
     </nav>
     <div class="bl-sidebar-user">
         <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
@@ -51,15 +54,32 @@
 @code {
     [Parameter] public ApiUser? User { get; set; }
     private bool _menuOpen;
+    private string? FacilityName;
     private bool IsSystem => User?.Roles.Contains("SystemAdmin") == true;
     private bool IsAdmin => User?.Roles.Contains("FacilityAdmin") == true;
+    private string CurrentPath => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+    private bool IsAccountPath => CurrentPath.StartsWith("/account/", StringComparison.OrdinalIgnoreCase);
+    private bool IsStaffNeedDetail => !IsAdmin && !IsSystem && CurrentPath.StartsWith("/needs/", StringComparison.OrdinalIgnoreCase) && CurrentPath is not "/needs/new" and not "/needs/mine";
     private string RoleName => IsSystem ? "System Admin" : IsAdmin ? "Facility Admin" : "Facility Staff";
     private string Initials => $"{(User?.FirstName ?? "B").FirstOrDefault()}{(User?.LastName ?? "L").FirstOrDefault()}".ToUpperInvariant();
     private void ToggleMenu() => _menuOpen = !_menuOpen;
     private void CloseMenu() => _menuOpen = false;
-    private void HandleKeyDown(KeyboardEventArgs args)
+    private async Task HandleKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseMenu();
+        if (args.Key == "Escape" && _menuOpen)
+        {
+            CloseMenu();
+            await _menuToggle.FocusAsync();
+        }
+    }
+
+    private ElementReference _menuToggle;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (User?.FacilityId is null || IsSystem) return;
+        try { FacilityName = (await Facilities.Mine()).Name; }
+        catch (ApiException) { }
     }
 
     private async Task SignOut()

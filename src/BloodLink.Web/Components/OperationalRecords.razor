@@ -1,0 +1,107 @@
+@using BloodLink.Web.Models
+
+@if (Data is FacilityDto facility)
+{
+    <section class="bl-card bl-card-pad bl-record-detail" aria-labelledby="record-heading">
+        <div class="bl-record-title"><div><p class="bl-eyebrow">Facility registration</p><h2 id="record-heading">@facility.Name</h2><p>@facility.FacilityType · @facility.City, @facility.Region</p></div><span class="bl-status-badge @StatusClass(facility.Status.ToString())">@Label(facility.Status.ToString())</span></div>
+        <dl class="bl-facts"><div><dt>Registration number</dt><dd>@facility.RegistrationNumber</dd></div><div><dt>Address</dt><dd>@facility.Address</dd></div><div><dt>Contact email</dt><dd>@facility.ContactEmail</dd></div><div><dt>Contact phone</dt><dd>@facility.ContactPhone</dd></div><div><dt>Registered</dt><dd>@facility.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</dd></div>@if (!string.IsNullOrWhiteSpace(facility.RejectionReason)) { <div><dt>Decision note</dt><dd>@facility.RejectionReason</dd></div> }</dl>
+    </section>
+}
+else if (Data is NeedDetailDto need)
+{
+    <section class="bl-card bl-card-pad bl-record-detail" aria-labelledby="record-heading">
+        <div class="bl-record-title"><div><p class="bl-eyebrow">Blood need · @need.FacilityName</p><h2 id="record-heading">@Blood(need.BloodType) · @need.UnitsNeeded units</h2><p>Needed by @need.NeededByUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</p></div><div class="bl-badge-row"><span class="bl-status-badge @StatusClass(need.Urgency.ToString())">@Label(need.Urgency.ToString())</span><span class="bl-status-badge @StatusClass(need.Status.ToString())">@Label(need.Status.ToString())</span></div></div>
+        <dl class="bl-facts"><div><dt>Created by</dt><dd>@need.CreatorDisplayName</dd></div><div><dt>Created</dt><dd>@need.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div>@if (need.InventoryAvailableUnits is int available) { <div><dt>Facility available</dt><dd>@available units</dd></div> }@if (!string.IsNullOrWhiteSpace(need.Note)) { <div><dt>Note</dt><dd>@need.Note</dd></div> }@if (!string.IsNullOrWhiteSpace(need.DecisionReason)) { <div><dt>Decision</dt><dd>@need.DecisionReason</dd></div> }</dl>
+    </section>
+}
+else if (Data is RequestDto request)
+{
+    <section class="bl-card bl-card-pad bl-record-detail" aria-labelledby="record-heading">
+        <div class="bl-record-title"><div><p class="bl-eyebrow">Blood request</p><h2 id="record-heading">@Blood(request.BloodType) · @request.UnitsRequested units</h2><p>@request.RequestingFacilityName <AppIcon Name="arrow-right" Size="14" /> @request.SourceFacilityName</p></div><span class="bl-status-badge @StatusClass(request.Status.ToString())">@Label(request.Status.ToString())</span></div>
+        <dl class="bl-facts"><div><dt>Linked need</dt><dd><a href="@($"/needs/{request.BloodNeedId}")">View need details</a></dd></div><div><dt>Priority</dt><dd>@Label(request.Priority.ToString())</dd></div><div><dt>Units accepted</dt><dd>@(request.UnitsAccepted?.ToString() ?? "Not accepted")</dd></div><div><dt>Current source availability</dt><dd>@(RequestSourceAvailable?.ToString() ?? "Unavailable") units</dd></div><div><dt>Sent</dt><dd>@request.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div>@if (!string.IsNullOrWhiteSpace(request.RequestNote)) { <div><dt>Request note</dt><dd>@request.RequestNote</dd></div> }@if (!string.IsNullOrWhiteSpace(request.ResponseNote)) { <div><dt>Response</dt><dd>@request.ResponseNote</dd></div> }</dl>
+    </section>
+}
+else if (Data is Paged<FacilityDto> facilities)
+{
+    @if (facilities.Items.Count == 0) { <DashboardEmptyState Title="No facilities in this status" Description="Facilities matching this status will appear here." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Facility</th><th>Type</th><th>Location</th><th>Registered</th><th>Status</th><th><span class="visually-hidden">Open</span></th></tr></thead><tbody>@foreach (var item in facilities.Items) { <tr><td><a href="@($"/system/facilities/{item.Id}")">@item.Name</a><small class="bl-cell-subtitle">@item.RegistrationNumber</small></td><td>@Label(item.FacilityType.ToString())</td><td>@item.City, @item.Region</td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td><td><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></td><td><a class="bl-icon-button" aria-label="View @item.Name" href="@($"/system/facilities/{item.Id}")"><AppIcon Name="chevron-right" Size="16" /></a></td></tr> }</tbody></table></div> }
+    <RecordPager Page="facilities.PageNumber" HasNext="facilities.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is Paged<StaffDto> staff)
+{
+    @if (staff.Items.Count == 0) { <DashboardEmptyState Title="No staff accounts yet" Description="Create a staff account to give a colleague access to this facility." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Staff member</th><th>Email</th><th>Status</th><th>Created</th><th>Lifecycle</th></tr></thead><tbody>@foreach (var item in staff.Items) { <tr><td>@item.FullName</td><td>@item.Email</td><td><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td><td><button class="bl-btn bl-btn-outline" @onclick="() => StaffAction.InvokeAsync(item)">@(item.Status == StaffStatus.Active ? "Deactivate" : "Activate")</button></td></tr> }</tbody></table></div> }
+    <RecordPager Page="staff.PageNumber" HasNext="staff.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is IReadOnlyList<InventoryItemDto> inventory)
+{
+    @if (!IsFacilityAdmin) { <div class="bl-alert bl-alert-info" role="status">View-only inventory. Facility staff can review stock levels; only facility administrators can record adjustments or search the network.</div> }
+    <section class="bl-card" aria-labelledby="inventory-table-title"><div class="bl-card-head"><h2 id="inventory-table-title">All blood types</h2></div><div class="bl-table-wrap"><table class="bl-table"><thead><tr><th>Blood type</th><th>Total</th><th>Reserved</th><th>Available</th><th>Low threshold</th><th>Status</th><th>Last updated</th>@if (IsFacilityAdmin) { <th>Action</th> }</tr></thead><tbody>
+        @foreach (var type in Enum.GetValues<BloodType>())
+        {
+            var item = inventory.FirstOrDefault(value => value.BloodType == type);
+            var available = item?.AvailableUnits ?? 0;
+            var threshold = item?.LowStockThreshold ?? 10;
+            var low = item is not null && available <= threshold;
+            <tr><td><BloodTypeTag Type="type" /></td><td class="bl-strong">@(item?.TotalUnits ?? 0)</td><td>@(item?.ReservedUnits ?? 0)</td><td class="bl-strong">@available</td><td>@threshold</td><td><span class="bl-status-badge @(item is null ? "bl-status-neutral" : low ? "bl-status-danger" : "bl-status-success")">@(item is null ? "No stock recorded" : low ? "Low stock" : "Healthy")</span></td><td>@(item?.UpdatedAtUtc is DateTime updated ? updated.ToLocalTime().ToString("d MMM yyyy") : "Never")</td>@if (IsFacilityAdmin) { <td><a class="bl-link" href="@($"/inventory/adjust?bloodType={(int)type}")">Adjust</a></td> }</tr>
+        }
+        </tbody></table></div></section>
+    @if (LowStock.Count > 0) { <div class="bl-alert bl-alert-danger" role="alert"><strong>Low-stock alert</strong><p>@string.Join(", ", LowStock.Select(item => Blood(item.BloodType))) is at or below the minimum threshold.</p></div> }
+}
+else if (Data is Paged<InventoryTransactionDto> history)
+{
+    @if (history.Items.Count == 0) { <DashboardEmptyState Title="No inventory activity" Description="Inventory changes will be recorded here." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>When</th><th>Blood type</th><th>Change</th><th>Available after</th><th>Reason</th><th>Updated by</th></tr></thead><tbody>@foreach (var item in history.Items) { <tr><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</td><td><BloodTypeTag Type="item.BloodType" /></td><td>@(item.TotalUnitsChange > 0 ? "+" : "")@item.TotalUnitsChange</td><td>@(item.TotalAfter - item.ReservedAfter)</td><td>@item.Reason</td><td>@item.ActorDisplayName</td></tr> }</tbody></table></div> }
+    <RecordPager Page="history.PageNumber" HasNext="history.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is Paged<AvailabilityDto> availability)
+{
+    @if (availability.Items.Count == 0) { <DashboardEmptyState Title="No matching stock found" Description="Try another blood type or lower the minimum available units." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Facility</th><th>Type</th><th>Location</th><th>Blood type</th><th>Available</th><th>Updated</th></tr></thead><tbody>@foreach (var item in availability.Items) { <tr><td>@item.FacilityName</td><td>@Label(item.FacilityType.ToString())</td><td>@item.City, @item.Region</td><td><BloodTypeTag Type="item.BloodType" /></td><td><strong>@item.AvailableUnits</strong></td><td>@item.UpdatedAtUtc.ToLocalTime().ToString("d MMM, h:mm tt")</td></tr> }</tbody></table></div> }
+    <RecordPager Page="availability.PageNumber" HasNext="availability.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is Paged<NeedDto> needs)
+{
+    @if (needs.Items.Count == 0) { <DashboardEmptyState Title="No blood needs" Description="New needs will appear here when submitted." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Blood type</th><th>Units</th><th>Urgency</th><th>Status</th><th>Submitted</th><th>Requested by</th></tr></thead><tbody>@foreach (var item in needs.Items) { <tr><td><BloodTypeTag Type="item.BloodType" /></td><td>@item.UnitsNeeded</td><td><span class="bl-status-badge @StatusClass(item.Urgency.ToString())">@Label(item.Urgency.ToString())</span></td><td><a href="@($"/needs/{item.Id}")"><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></a></td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td><td>@(item.CreatorDisplayName ?? "Facility staff")</td></tr> }</tbody></table></div> }
+    <RecordPager Page="needs.PageNumber" HasNext="needs.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is Paged<RequestDto> requests)
+{
+    @if (requests.Items.Count == 0) { <DashboardEmptyState Title="No requests" Description="Requests will appear here as facilities coordinate stock." /> }
+    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Blood type</th><th>Facilities</th><th>Units</th><th>Priority</th><th>Status</th><th>Sent</th></tr></thead><tbody>@foreach (var item in requests.Items) { <tr><td><BloodTypeTag Type="item.BloodType" /></td><td>@item.RequestingFacilityName <span aria-hidden="true">→</span> @item.SourceFacilityName</td><td>@item.UnitsRequested@(item.UnitsAccepted is int accepted ? $" / {accepted} accepted" : "")</td><td><span class="bl-status-badge @StatusClass(item.Priority.ToString())">@Label(item.Priority.ToString())</span></td><td><a href="@($"/requests/{item.Id}")"><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></a></td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td></tr> }</tbody></table></div> }
+    <RecordPager Page="requests.PageNumber" HasNext="requests.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is Paged<NotificationDto> notifications)
+{
+    @if (notifications.Items.Count == 0) { <DashboardEmptyState Title="You're all caught up" Description="New facility activity and workflow updates will appear here." /> }
+    else { <div class="bl-card bl-notification-list">@foreach (var item in notifications.Items) { <article class="bl-notification-row @(item.IsRead ? null : "is-unread")"><span class="bl-notification-icon"><AppIcon Name="@(item.IsRead ? "bell" : "bell-ring")" Size="18" /></span><div class="bl-notification-content"><h2>@item.Title</h2><p>@item.Message</p><time datetime="@item.CreatedAtUtc.ToString("O")">@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</time>@if (item.RelatedEntityId is Guid related && string.Equals(item.RelatedEntityType, "Need", StringComparison.OrdinalIgnoreCase)) { <a href="@($"/needs/{related}")">View need</a> } else if (item.RelatedEntityId is Guid relatedRequest && string.Equals(item.RelatedEntityType, "Request", StringComparison.OrdinalIgnoreCase)) { <a href="@($"/requests/{relatedRequest}")">View request</a> }</div>@if (!item.IsRead) { <button class="bl-btn bl-btn-outline" @onclick="() => NotificationRead.InvokeAsync(item.Id)">Mark read</button> }</article> }</div> }
+    <RecordPager Page="notifications.PageNumber" HasNext="notifications.HasNext" PageChanged="PageChanged" />
+}
+else if (Data is IReadOnlyList<NeedTimelineDto> needTimeline)
+{
+    <section class="bl-card bl-card-pad"><h2 class="bl-card-title">Status history</h2><ul class="bl-timeline">@foreach (var item in needTimeline) { <li class="bl-timeline-item"><span class="bl-timeline-dot"></span><div><time class="bl-timeline-time">@item.ChangedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</time><p class="bl-timeline-event">@Label(item.FromStatus?.ToString() ?? "Created") <span aria-hidden="true">→</span> @Label(item.ToStatus.ToString()) by @item.ActorDisplayName</p>@if (!string.IsNullOrWhiteSpace(item.Note)) { <p>@item.Note</p> }</div></li> }</ul></section>
+}
+else if (Data is IReadOnlyList<RequestTimelineDto> requestTimeline)
+{
+    <section class="bl-card bl-card-pad"><h2 class="bl-card-title">Status history</h2><ul class="bl-timeline">@foreach (var item in requestTimeline) { <li class="bl-timeline-item"><span class="bl-timeline-dot"></span><div><time class="bl-timeline-time">@item.ChangedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</time><p class="bl-timeline-event">@Label(item.FromStatus?.ToString() ?? "Created") <span aria-hidden="true">→</span> @Label(item.ToStatus.ToString()) by @item.ActorDisplayName</p>@if (!string.IsNullOrWhiteSpace(item.Note)) { <p>@item.Note</p> }</div></li> }</ul></section>
+}
+else if (Data is not null)
+{
+    <DashboardEmptyState Title="No records to show" Description="There are no records to display right now." />
+}
+
+@code {
+    [Parameter, EditorRequired] public object? Data { get; set; }
+    [Parameter] public EventCallback<StaffDto> StaffAction { get; set; }
+    [Parameter] public EventCallback<Guid> NotificationRead { get; set; }
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+    [Parameter] public bool IsFacilityAdmin { get; set; }
+    [Parameter] public IReadOnlyList<LowStockDto> LowStock { get; set; } = [];
+    [Parameter] public int? RequestSourceAvailable { get; set; }
+
+    private static string Blood(BloodType type) => type switch { BloodType.APositive => "A+", BloodType.ANegative => "A-", BloodType.BPositive => "B+", BloodType.BNegative => "B-", BloodType.ABPositive => "AB+", BloodType.ABNegative => "AB-", BloodType.OPositive => "O+", _ => "O-" };
+    private static string Label(string value) => System.Text.RegularExpressions.Regex.Replace(value, "(?<=[a-z])([A-Z])", " $1");
+    private static string StatusClass(string value) => value switch { "Approved" or "Active" or "FulfilledInternally" or "FulfilledExternally" or "Accepted" or "Read" => "bl-status-success", "Pending" or "PendingReview" or "PendingActivation" or "Searching" or "Sent" or "Urgent" => "bl-status-warning", "Rejected" or "Suspended" or "Inactive" or "Cancelled" or "Emergency" => "bl-status-danger", _ => "bl-status-neutral" };
+
+}

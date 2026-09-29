@@ -34,7 +34,7 @@
 
 <PageTitle>@Title | BloodLink</PageTitle>
 <div class="bl-workspace-page">
-    <header class="bl-page-header"><div><p class="bl-eyebrow">BloodLink workspace</p><h1>@Title</h1></div><button class="bl-icon-button" type="button" title="Refresh" aria-label="Refresh" @onclick="Load">&#x21bb;</button></header>
+    <header class="bl-page-header"><div><p class="bl-eyebrow">BloodLink workspace · @RoleLabel</p><h1>@Title</h1></div><div class="bl-page-actions"><span class="bl-header-user"><span class="bl-sidebar-avatar">@UserInitials</span><span><strong>@Session.User?.FirstName @Session.User?.LastName</strong><small>@RoleLabel</small></span></span>@if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) { <a class="bl-btn bl-btn-outline" href="/inventory/search"><AppIcon Name="search" Size="14" /> Network search</a><a class="bl-btn bl-btn-primary" href="/inventory/adjust"><AppIcon Name="package" Size="14" /> Adjust inventory</a> } else if (Path == "/inventory") { <a class="bl-btn bl-btn-outline" href="/inventory/history">History</a> } else if (Path == "/facility/staff") { <a class="bl-btn bl-btn-primary" href="/facility/staff/create">Create staff</a> }<button class="bl-icon-button" type="button" title="Refresh" aria-label="Refresh" @onclick="Load"><AppIcon Name="activity" Size="17" /></button></div></header>
     <Feedback Message="@Message" Variant="@Variant" />
     @if (ApiErrors.Count > 0)
     { <div class="bl-alert bl-alert-danger" role="alert"><ul>@foreach (var error in ApiErrors) { <li>@error.Key: @string.Join(" ", error.Value)</li> }</ul></div> }
@@ -47,18 +47,25 @@
             </section>
         </div>
     }
-    @if (Busy) { <p role="status">Loading…</p> }
+    @if (Busy) { <div class="bl-card bl-loading-state" role="status"><span class="bl-loading-dot"></span>Loading @Title.ToLowerInvariant()…</div> }
     @if (Path == "/access-denied")
     {
         <section class="bl-panel"><h2>Access denied</h2><p>Your account does not have permission to view this page.</p><a class="bl-button bl-button-primary" href="/dashboard">Return to dashboard</a></section>
     }
     else if (Path == "/account/manage")
     {
-        <section class="bl-panel"><h2>Account</h2><dl><dt>Name</dt><dd>@Session.User?.FirstName @Session.User?.LastName</dd><dt>Email</dt><dd>@Session.User?.Email</dd><dt>Roles</dt><dd>@string.Join(", ", Session.User?.Roles ?? Array.Empty<string>())</dd></dl><a class="bl-button bl-button-primary" href="/account/change-password">Change password</a></section>
+        <section class="bl-card bl-card-pad bl-record-detail"><p class="bl-eyebrow">Your account</p><h2 class="bl-card-title">Account details</h2>
+            @if (Session.User?.MustChangePassword == true) { <div class="bl-alert bl-alert-info" role="status">Your administrator requires a password change before continuing. <a href="/account/change-password">Change password</a></div> }
+            @if (Session.User?.FacilityStatus == FacilityStatus.Pending) { <div class="bl-alert bl-alert-info" role="status">Facility registration is awaiting System Admin approval. Operational access is not available until approval.</div> }
+            @if (Session.User?.FacilityStatus == FacilityStatus.Suspended) { <div class="bl-alert bl-alert-danger" role="alert">This facility is suspended. Contact BloodLink support for assistance.</div> }
+            @if (Session.User?.FacilityStatus == FacilityStatus.Rejected) { <div class="bl-alert bl-alert-danger" role="alert">This facility registration was rejected. Contact BloodLink support for assistance.</div> }
+            <dl class="bl-facts"><div><dt>Name</dt><dd>@Session.User?.FirstName @Session.User?.LastName</dd></div><div><dt>Email</dt><dd>@Session.User?.Email</dd></div><div><dt>Role</dt><dd>@RoleLabel</dd></div>@if (Session.User?.FacilityStatus is FacilityStatus facilityStatus) { <div><dt>Facility access</dt><dd><span class="bl-status-badge @FacilityStatusClass(facilityStatus)">@facilityStatus</span></dd></div> }</dl>
+            <div class="bl-form-actions"><a class="bl-btn bl-btn-outline" href="/account/change-password">Change password</a></div>
+        </section>
     }
     else if (Path == "/account/change-password")
     {
-        <section class="bl-panel"><form @onsubmit="ChangePassword" @onsubmit:preventDefault><label>Current password<input type="password" autocomplete="current-password" required @bind="CurrentPassword" /></label><label>New password<input type="password" autocomplete="new-password" minlength="12" required aria-describedby="new-password-hint" @bind="NewPassword" /></label><p id="new-password-hint">Use at least 12 characters and follow your facility password policy.</p><label>Confirm new password<input type="password" autocomplete="new-password" required @bind="ConfirmPassword" /></label><button class="bl-button bl-button-primary" disabled="@Busy">Change password</button></form></section>
+        <section class="bl-card bl-card-pad bl-form-surface"><p class="bl-eyebrow">Account security</p><h2 class="bl-card-title">Change password</h2><p class="bl-card-desc">Choose a new password to protect your BloodLink account.</p><form class="bl-form-grid" @onsubmit="ChangePassword" @onsubmit:preventDefault><label class="bl-field"><span class="bl-label">Current password</span><input class="bl-input" type="password" autocomplete="current-password" required @bind="CurrentPassword" /></label><label class="bl-field"><span class="bl-label">New password</span><input class="bl-input" type="password" autocomplete="new-password" minlength="12" required aria-describedby="new-password-hint" @bind="NewPassword" /></label><p id="new-password-hint" class="bl-fieldset-help">Use at least 12 characters and follow your facility password policy.</p><label class="bl-field"><span class="bl-label">Confirm new password</span><input class="bl-input" type="password" autocomplete="new-password" required @bind="ConfirmPassword" /></label><div class="bl-form-actions"><button class="bl-btn bl-btn-danger" disabled="@Busy">Change password</button></div></form></section>
     }
     else if (Path == "/facility/profile")
     {
@@ -122,19 +129,39 @@
         }
         @if (Path.StartsWith("/needs/") && CurrentId is not null && Path != "/needs/new")
         {
-            <section class="bl-panel"><label>Reason<textarea @bind="Reason"></textarea></label><div class="bl-actions">@if (Data is NeedDetailDto detail && Session.User?.Roles.Contains("FacilityAdmin") == true) { @if (detail.Status == BloodNeedStatus.PendingReview) { <button class="bl-button bl-button-primary" @onclick="StartNeedSearch">Start search</button> }@if (detail.Status is BloodNeedStatus.PendingReview or BloodNeedStatus.Searching) { <button class="bl-button bl-button-primary" @onclick="FulfilNeed">Fulfil internally</button><button class="bl-button bl-button-secondary" @onclick="RejectNeed">Reject</button> }@if (detail.Status == BloodNeedStatus.Searching) { <a class="bl-button bl-button-secondary" href="@($"/requests/sent?needId={CurrentId}")">Request externally</a> } }@if (Data is NeedDetailDto openNeed && openNeed.Status is BloodNeedStatus.PendingReview or BloodNeedStatus.Searching) { <button class="bl-button bl-button-secondary" @onclick="CancelNeed">Cancel need</button> }</div></section>
+            @if (Data is NeedDetailDto detail)
+            {
+                var isAdmin = Session.User?.Roles.Contains("FacilityAdmin") == true;
+                var isCreator = string.Equals(detail.CreatorDisplayName, $"{Session.User?.FirstName} {Session.User?.LastName}".Trim(), StringComparison.OrdinalIgnoreCase);
+                var canCancel = detail.Status is BloodNeedStatus.PendingReview or BloodNeedStatus.Searching && isAdmin
+                    || detail.Status == BloodNeedStatus.PendingReview && isCreator;
+                <section class="bl-card bl-card-pad bl-workflow-actions" aria-labelledby="need-actions-title">
+                    <h2 id="need-actions-title" class="bl-card-title">Need actions</h2>
+                    <label class="bl-field"><span class="bl-label">Decision note</span><textarea class="bl-input bl-textarea" @bind="Reason" maxlength="1000"></textarea></label>
+                    <div class="bl-actions">
+                        @if (isAdmin && detail.Status == BloodNeedStatus.PendingReview) { <button class="bl-btn bl-btn-outline" @onclick="StartNeedSearch">Start network search</button> }
+                        @if (isAdmin && detail.Status is BloodNeedStatus.PendingReview or BloodNeedStatus.Searching) { <button class="bl-btn bl-btn-primary" @onclick="FulfilNeed">Fulfil internally</button> }
+                        @if (isAdmin && detail.Status == BloodNeedStatus.PendingReview) { <button class="bl-btn bl-btn-danger" @onclick="RejectNeed">Reject</button> }
+                        @if (isAdmin && detail.Status == BloodNeedStatus.Searching) { <a class="bl-btn bl-btn-outline" href="@($"/requests/sent?needId={CurrentId}")">Request externally</a> }
+                        @if (canCancel) { <button class="bl-btn bl-btn-outline" @onclick="CancelNeed">Cancel need</button> }
+                    </div>
+                </section>
+            }
         }
         @if (Data is RequestDto request && Session.User?.FacilityId == request.SourceFacilityId)
         {
-            <section class="bl-panel"><label>Units accepted<input type="number" min="1" max="@request.UnitsRequested" @bind="AcceptedUnits" /></label><label>Response note<textarea @bind="Reason"></textarea></label><div class="bl-actions">@if (request.Status == BloodRequestStatus.Sent) { <button class="bl-button bl-button-primary" @onclick="AcceptRequest">Accept units</button><button class="bl-button bl-button-secondary" @onclick="RejectRequest">Reject</button> }@if (request.Status is BloodRequestStatus.Sent or BloodRequestStatus.Accepted) { <button class="bl-button bl-button-secondary" @onclick="CancelRequest">Cancel request</button> }@if (request.Status == BloodRequestStatus.Accepted) { <button class="bl-button bl-button-primary" @onclick="FulfilRequest">Mark fulfilled</button> }</div></section>
+            <section class="bl-card bl-card-pad bl-workflow-actions" aria-labelledby="request-actions-title"><h2 id="request-actions-title" class="bl-card-title">Source facility actions</h2><label class="bl-field"><span class="bl-label">Units accepted</span><input class="bl-input" type="number" min="1" max="@(Math.Min(request.UnitsRequested, RequestSourceAvailable ?? request.UnitsRequested))" @bind="AcceptedUnits" /></label><label class="bl-field"><span class="bl-label">Response note</span><textarea class="bl-input bl-textarea" maxlength="1000" @bind="Reason"></textarea></label><div class="bl-actions">@if (request.Status == BloodRequestStatus.Sent) { <button class="bl-btn bl-btn-primary" disabled="@(RequestSourceAvailable is null or 0)" @onclick="AcceptRequest">Accept units</button><button class="bl-btn bl-btn-danger" @onclick="RejectRequest">Reject</button> }@if (request.Status is BloodRequestStatus.Sent or BloodRequestStatus.Accepted) { <button class="bl-btn bl-btn-outline" @onclick="CancelRequest">Cancel request</button> }@if (request.Status == BloodRequestStatus.Accepted) { <button class="bl-btn bl-btn-primary" @onclick="FulfilRequest">Confirm handover and fulfil</button> }</div></section>
         }
-        <section class="bl-data-section"><h2>@(Path == "/dashboard" ? "Overview" : "Records")</h2>
-            @if (Rows.Count == 0) { <p>No records to display.</p> }
-            else { <div class="bl-table-wrap"><table class="bl-table"><thead><tr>@foreach (var key in Rows[0].Keys) { <th scope="col">@key</th> }@if (Path == "/facility/staff" || Path == "/notifications") { <th scope="col">Actions</th> }</tr></thead><tbody>@foreach (var row in Rows) { <tr>@foreach (var cell in row) { <td>@if (cell.Key == "Id" && Guid.TryParse(cell.Value, out var linkedId) && LinkForRecord(linkedId) is string href) { <a href="@href">@cell.Value</a> } else { @cell.Value }</td> }@if (Path == "/facility/staff") { <td><button class="bl-btn bl-btn-outline" @onclick="() => ChangeStaff(row)">@(row.GetValueOrDefault("Status") == "Active" ? "Deactivate" : "Activate")</button></td> } else if (Path == "/notifications") { <td><button class="bl-btn bl-btn-outline" disabled="@(row.GetValueOrDefault("IsRead") == "True")" @onclick="() => MarkNotificationRead(row)">Mark read</button></td> }</tr>}</tbody></table></div> }
-        </section>
-        @if (TimelineRows.Count > 0)
+        @if (Path != "/dashboard")
         {
-            <section class="bl-data-section"><h2>Activity</h2><div class="bl-table-wrap"><table class="bl-table"><thead><tr>@foreach (var key in TimelineRows[0].Keys) { <th scope="col">@key</th> }</tr></thead><tbody>@foreach (var row in TimelineRows) { <tr>@foreach (var value in row.Values) { <td>@value</td> }</tr>}</tbody></table></div></section>
+            @if (TimelineData is not null)
+            {
+                <div class="bl-detail-grid"><div class="bl-detail-main"><OperationalRecords Data="Data" RequestSourceAvailable="RequestSourceAvailable" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" /></div><aside class="bl-detail-aside"><OperationalRecords Data="TimelineData" /></aside></div>
+            }
+            else
+            {
+                <OperationalRecords Data="Data" StaffAction="ChangeStaff" NotificationRead="MarkNotificationReadId" PageChanged="ChangePage" RequestSourceAvailable="RequestSourceAvailable" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" />
+            }
         }
         }
     }
@@ -143,8 +170,13 @@
 @code {
     [Parameter] public Guid? RecordId { get; set; }
     private string Path => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+    private string RoleLabel => Session.User?.Roles.Contains("SystemAdmin") == true ? "System Admin" : Session.User?.Roles.Contains("FacilityAdmin") == true ? "Facility Admin" : "Facility Staff";
+    private string UserInitials => $"{(Session.User?.FirstName ?? "B").FirstOrDefault()}{(Session.User?.LastName ?? "L").FirstOrDefault()}".ToUpperInvariant();
     private string Title => Path switch { "/dashboard" => "Dashboard", "/account/manage" => "Account", "/account/change-password" => "Change password", "/facility/profile" => "Facility profile", "/facility/staff" or "/facility/staff/create" => "Staff", "/system/facilities" => "Facility governance", "/inventory/adjust" => "Adjust inventory", "/inventory/history" => "Inventory history", "/inventory/search" => "Find blood availability", "/inventory" => "Inventory", "/needs/new" => "Submit a need", "/needs/mine" => "My needs", "/needs" => "Facility needs", "/requests/sent" => "Requests sent", "/requests/received" => "Requests received", "/notifications" => "Notifications", "/access-denied" => "Access denied", _ when Path.StartsWith("/system/facilities/") => "Facility governance", _ when Path.StartsWith("/needs/") => "Need details", _ when Path.StartsWith("/requests/") => "Request details", _ => "BloodLink" };
     private object? Data { get; set; }
+    private object? TimelineData { get; set; }
+    private IReadOnlyList<LowStockDto> LowStockItems { get; set; } = [];
+    private int PageNumber { get; set; } = 1;
     private List<Dictionary<string, string>> Rows { get; set; } = [];
     private List<Dictionary<string, string>> TimelineRows { get; set; } = [];
     private string? Message { get; set; }
@@ -161,6 +193,7 @@
     private int FacilityStatusFilter { get; set; } private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
     private string NeedIdText { get; set; } = ""; private string SourceFacilityText { get; set; } = ""; private DateTime NeededByLocal { get; set; } = DateTime.Now.AddHours(1); private bool DeadlineError { get; set; }
     private NeedDetailDto? RequestNeed { get; set; }
+    private int? RequestSourceAvailable { get; set; }
     private List<AvailabilityDto> RequestSources { get; set; } = [];
 
     private string? loadedRouteKey;
@@ -170,7 +203,7 @@
     {
         if (loadedRouteKey == RouteKey) return;
         loadedRouteKey = RouteKey;
-        Data = null; Rows = []; TimelineRows = []; Message = null;
+        Data = null; TimelineData = null; Rows = []; TimelineRows = []; PageNumber = 1; Message = null;
         await SetRouteState();
         await Load();
         StateHasChanged();
@@ -193,7 +226,7 @@
 
     private async Task Load()
     {
-        Busy = true; Message = null; ApiErrors = new Dictionary<string, string[]>(); Data = null; Rows = []; TimelineRows = []; RequestNeed = null; RequestSources = [];
+        Busy = true; Message = null; ApiErrors = new Dictionary<string, string[]>(); Data = null; TimelineData = null; LowStockItems = []; RequestSourceAvailable = null; Rows = []; TimelineRows = []; RequestNeed = null; RequestSources = [];
         try
         {
             if (!CanAccessPath()) { Message = "Your account does not have permission to view this page."; Variant = "danger"; return; }
@@ -201,35 +234,47 @@
             {
                 "/dashboard" => await Dashboard.GetDashboard(),
                 "/facility/profile" => await Facilities.Mine(),
-                "/facility/staff" => await Staff.List(),
+                "/facility/staff" => await Staff.List(PageNumber),
                 "/inventory" => await Inventory.List(),
-                "/inventory/history" => await Inventory.History(),
+                "/inventory/history" => await Inventory.History(PageNumber),
                 "/inventory/search" => null,
-                "/needs/mine" => await Needs.Mine(),
-                "/needs" => await Needs.List(),
-                "/requests/sent" => await Requests.Sent(),
-                "/requests/received" => await Requests.Received(),
-                "/notifications" => await Notifications.List(),
-                "/system/facilities" => await Facilities.SystemList(FacilityStatusFilter),
+                "/needs/mine" => await Needs.Mine(PageNumber),
+                "/needs" => await Needs.List(PageNumber),
+                "/requests/sent" => await Requests.Sent(PageNumber),
+                "/requests/received" => await Requests.Received(PageNumber),
+                "/notifications" => await Notifications.List(PageNumber),
+                "/system/facilities" => await Facilities.SystemList(FacilityStatusFilter, PageNumber),
                 _ when Path.StartsWith("/system/facilities/") && CurrentId is Guid id => await Facilities.SystemGet(id),
                 _ when Path.StartsWith("/needs/") && CurrentId is Guid id => await Needs.Get(id),
                 _ when Path.StartsWith("/requests/") && CurrentId is Guid id => await Requests.Get(id),
                 _ => null
             };
             if (Data is not null) Rows = ToRows(Data);
+            if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) LowStockItems = await Inventory.LowStock();
             if (Data is FacilityDto facility) { Address = facility.Address; ContactEmail = facility.ContactEmail; ContactPhone = facility.ContactPhone; }
+            if (Data is RequestDto currentRequest)
+            {
+                try
+                {
+                    RequestSourceAvailable = Session.User?.FacilityId == currentRequest.SourceFacilityId
+                        ? (await Inventory.List()).FirstOrDefault(item => item.BloodType == currentRequest.BloodType)?.AvailableUnits
+                        : (await Inventory.Search(currentRequest.BloodType, 1)).Items.FirstOrDefault(item => item.FacilityId == currentRequest.SourceFacilityId)?.AvailableUnits;
+                }
+                catch (ApiException) { }
+            }
             if (Path == "/requests/sent" && Guid.TryParse(NeedIdText, out var linkedNeedId))
             {
                 RequestNeed = await Needs.Get(linkedNeedId);
                 if (RequestNeed.Status == BloodNeedStatus.Searching) await SearchRequestSources();
             }
-            if (CurrentId is Guid record && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/needs/")) TimelineRows = ToRows(await Needs.Timeline(record));
-            if (CurrentId is Guid requestId && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/requests/")) TimelineRows = ToRows(await Requests.Timeline(requestId));
+            if (CurrentId is Guid record && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/needs/")) TimelineData = await Needs.Timeline(record);
+            if (CurrentId is Guid requestId && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/requests/")) TimelineData = await Requests.Timeline(requestId);
         }
         catch (ApiException ex) { Message = ex.Message; ApiErrors = ex.Fields; }
         finally { Busy = false; }
     }
     private Task ClearDeadlineError() { DeadlineError = false; return Task.CompletedTask; }
+    private async Task ChangePage(int page) { PageNumber = Math.Max(1, page); await Load(); }
     private async Task Run(Func<Task> action, string success)
     {
         Busy = true; Message = null; ApiErrors = new Dictionary<string, string[]>();
@@ -245,7 +290,7 @@
         await Run(async () => { var created = await Needs.Create(new(SelectedBloodType, NeedUnits, SelectedUrgency, DateTime.Parse(utc, null, System.Globalization.DateTimeStyles.RoundtripKind), Note)); Navigation.NavigateTo($"/needs/{created.Id}"); }, "Need submitted.");
     }
     private Task UpdateFacility() => Run(() => Facilities.Update(new(Address, ContactEmail, ContactPhone)), "Facility profile saved.");
-    private Task ChangePassword() => string.IsNullOrWhiteSpace(NewPassword) || NewPassword != ConfirmPassword ? SetMessage("New passwords do not match.") : Run(async () => { await Auth.ChangePassword(CurrentPassword, NewPassword); CurrentPassword = NewPassword = ConfirmPassword = ""; Navigation.NavigateTo("/account/login? signedOut=true".Replace(" ", ""), true); }, "Password changed. Sign in again.");
+    private Task ChangePassword() => string.IsNullOrWhiteSpace(NewPassword) || NewPassword != ConfirmPassword ? SetMessage("New passwords do not match.") : Run(async () => { await Auth.ChangePassword(CurrentPassword, NewPassword); CurrentPassword = NewPassword = ConfirmPassword = ""; Navigation.NavigateTo("/account/login?signedOut=true", true); }, "Password changed. Sign in again.");
     private Task CreateStaff() => Run(async () => { await Staff.Create(new(StaffFirst, StaffLast, StaffEmail, StaffPhone, StaffPassword)); StaffPassword = ""; Navigation.NavigateTo("/facility/staff"); }, "Staff account created.");
     private Task AdjustInventory() => Run(() => Inventory.Adjust(new(SelectedBloodType, UnitsChange, Reason, null)), "Inventory adjustment saved.");
     private async Task SearchInventory() { try { Data = await Inventory.Search(SelectedBloodType, MinimumAvailable); Rows = ToRows(Data); } catch (ApiException ex) { Message = ex.Message; } }
@@ -266,7 +311,12 @@
     private Task FulfilNeed() => Run(() => Needs.Fulfil(CurrentId!.Value, Reason), "Need fulfilled internally.");
     private Task RejectNeed() => AskConfirmation("Reject this blood need?", () => Run(() => Needs.Reject(CurrentId!.Value, Reason), "Need rejected."));
     private Task CancelNeed() => AskConfirmation("Cancel this blood need?", () => Run(() => Needs.Cancel(CurrentId!.Value, Reason), "Need cancelled."));
-    private Task AcceptRequest() => Run(() => Requests.Accept(CurrentId!.Value, AcceptedUnits, Reason), "Request response saved.");
+    private Task AcceptRequest()
+    {
+        if (Data is not RequestDto request || RequestSourceAvailable is not int available || AcceptedUnits < 1 || AcceptedUnits > available || AcceptedUnits > request.UnitsRequested)
+            return SetMessage("Accepted units must be within the requested amount and current available stock.");
+        return Run(() => Requests.Accept(CurrentId!.Value, AcceptedUnits, Reason), "Request response saved.");
+    }
     private Task RejectRequest() => Run(() => Requests.Reject(CurrentId!.Value, Reason), "Request rejected.");
     private Task CancelRequest() => AskConfirmation("Cancel this request? Any reserved units will be released.", () => Run(() => Requests.Cancel(CurrentId!.Value), "Request cancelled and any reservation released."));
     private Task FulfilRequest() => Run(() => Requests.Fulfil(CurrentId!.Value, Reason), "Request marked fulfilled.");
@@ -279,15 +329,30 @@
         if (active) await AskConfirmation($"Deactivate {row.GetValueOrDefault("FullName")}? They will no longer be able to sign in.", operation);
         else await operation();
     }
+    private async Task ChangeStaff(StaffDto staff)
+    {
+        var operation = () => Run(() => staff.Status == StaffStatus.Active
+            ? Staff.Deactivate(staff.UserId, "Deactivated by facility administrator.")
+            : Staff.Activate(staff.UserId), staff.Status == StaffStatus.Active ? "Staff account deactivated." : "Staff account activated.");
+        if (staff.Status == StaffStatus.Active)
+            await AskConfirmation($"Deactivate {staff.FullName}? They will no longer be able to sign in.", operation);
+        else
+            await operation();
+    }
     private Task MarkNotificationRead(Dictionary<string, string> row) => Guid.TryParse(row.GetValueOrDefault("Id"), out var id) ? Run(() => Notifications.MarkRead(id), "Notification marked as read.") : Task.CompletedTask;
+    private Task MarkNotificationReadId(Guid id) => Run(() => Notifications.MarkRead(id), "Notification marked as read.");
     private Task MarkAllNotificationsRead() => Run(() => Notifications.MarkAllRead(), "Notifications marked as read.");
     private string? LinkForRecord(Guid id) => Path.StartsWith("/needs") ? $"/needs/{id}" : Path.StartsWith("/requests") ? $"/requests/{id}" : Path.StartsWith("/system/facilities") ? $"/system/facilities/{id}" : null;
+    private static string FacilityStatusClass(FacilityStatus status) => status switch { FacilityStatus.Approved => "bl-status-success", FacilityStatus.Pending => "bl-status-warning", _ => "bl-status-danger" };
     private Guid? CurrentId => Guid.TryParse(Path.Split('/').Last(), out var id) ? id : null;
     private bool CanAccessPath()
     {
         var roles = Session.User?.Roles ?? Array.Empty<string>();
         if (Path.StartsWith("/system/facilities")) return roles.Contains("SystemAdmin");
-        if (Path.StartsWith("/facility/") || Path == "/inventory/adjust" || Path == "/needs" || Path.StartsWith("/requests/")) return roles.Contains("FacilityAdmin");
+        if (Path == "/facility/profile" || Path.StartsWith("/facility/staff") || Path == "/inventory/adjust" || Path == "/inventory/history" || Path == "/needs" || Path.StartsWith("/requests/")) return roles.Contains("FacilityAdmin");
+        if (Path == "/inventory/search") return roles.Contains("FacilityAdmin");
+        if (Path == "/inventory") return roles.Contains("FacilityAdmin") || roles.Contains("FacilityStaff");
+        if (Path == "/notifications") return roles.Contains("FacilityAdmin") || roles.Contains("FacilityStaff");
         if (Path == "/needs/new" || Path == "/needs/mine") return roles.Contains("FacilityStaff") || roles.Contains("FacilityAdmin");
         return roles.Contains("SystemAdmin") || roles.Contains("FacilityAdmin") || roles.Contains("FacilityStaff");
     }

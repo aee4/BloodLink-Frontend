@@ -566,6 +566,74 @@ a.bl-nav-item.active { color: white; background: rgba(190,29,44,.3); }
 .bl-back-arrow { transform: rotate(180deg); }
 .bl-footer a:focus-visible, .bl-desktop-nav a:focus-visible, .bl-mobile-nav a:focus-visible { outline-offset: .2rem; }
 
+/* Typed operational records share the original BloodLink page primitives. */
+.bl-page-actions, .bl-header-user, .bl-record-title { display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
+.bl-header-user { justify-content: flex-start; color: var(--bl-navy); }
+.bl-header-user > span:last-child { display: flex; flex-direction: column; line-height: 1.25; }
+.bl-header-user strong { font-size: .76rem; }
+.bl-header-user small, .bl-cell-subtitle { color: var(--bl-muted); font-size: .68rem; }
+.bl-page-actions .bl-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--bl-navy); cursor: pointer; }
+.bl-record-detail { margin: 0 0 1rem; }
+.bl-record-title { align-items: flex-start; margin-bottom: 1.35rem; }
+.bl-record-title h2 { margin: 0; font-size: 1.15rem; font-weight: 750; }
+.bl-record-title p { margin: .35rem 0 0; color: var(--bl-muted); font-size: .8rem; }
+.bl-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0; }
+.bl-facts > div { min-width: 0; padding-top: .75rem; border-top: 1px solid var(--bl-border); }
+.bl-facts dt, .bl-inventory-facts dt { color: var(--bl-muted); font-size: .67rem; font-weight: 650; text-transform: uppercase; }
+.bl-facts dd, .bl-inventory-facts dd { margin: .2rem 0 0; overflow-wrap: anywhere; font-size: .83rem; }
+.bl-cell-subtitle { display: block; margin-top: .22rem; }
+.bl-blood-type { display: inline-flex; min-width: 2.4rem; justify-content: center; padding: .24rem .45rem; color: var(--bl-red); background: #ffe9eb; border-radius: .4rem; font-size: .72rem; font-weight: 750; }
+.bl-inventory-card { min-width: 0; padding: 1.1rem; }
+.bl-inventory-card .bl-record-title { align-items: center; margin-bottom: .9rem; }
+.bl-inventory-number { margin: 0 0 .85rem; font-size: 1.7rem; font-weight: 800; }
+.bl-inventory-number span { color: var(--bl-muted); font-size: .72rem; font-weight: 500; }
+.bl-inventory-facts { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; margin: 0; padding-top: .75rem; border-top: 1px solid var(--bl-border); }
+.bl-inventory-facts > div { min-width: 4.4rem; }
+.bl-notification-list { margin-bottom: 1rem; }
+.bl-notification-row { display: flex; align-items: flex-start; gap: .9rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--bl-border); }
+.bl-notification-row:last-child { border-bottom: 0; }
+.bl-notification-row.is-unread { background: #fffafb; }
+.bl-notification-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.3rem; height: 2.3rem; flex: none; color: var(--bl-red); background: rgba(190,29,44,.08); border-radius: .5rem; }
+.bl-notification-content { flex: 1; min-width: 0; }
+.bl-notification-content h2 { margin: 0 0 .25rem; font-size: .86rem; font-weight: 700; }
+.bl-notification-content p { margin: 0 0 .4rem; color: var(--bl-text); font-size: .8rem; overflow-wrap: anywhere; }
+.bl-notification-content time, .bl-notification-content a { display: inline-block; margin: .12rem .75rem 0 0; color: var(--bl-muted); font-size: .7rem; }
+.bl-notification-content a { color: var(--bl-red); font-weight: 650; }
+.bl-empty-state, .bl-loading-state { display: flex; align-items: center; flex-direction: column; justify-content: center; gap: .5rem; min-height: 12rem; padding: 1.5rem; text-align: center; }
+.bl-empty-state h2 { margin: 0; font-size: .95rem; }
+.bl-empty-state p { max-width: 28rem; margin: 0; color: var(--bl-muted); font-size: .78rem; }
+.bl-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; margin-bottom: .2rem; color: var(--bl-red); background: rgba(190,29,44,.08); border-radius: .6rem; }
+.bl-loading-state { flex-direction: row; min-height: 4.2rem; justify-content: flex-start; color: var(--bl-muted); font-size: .82rem; }
+.bl-loading-dot { width: .55rem; height: .55rem; background: var(--bl-red); border-radius: 50%; animation: bl-pulse 1s infinite alternate; }
+@keyframes bl-pulse { to { opacity: .3; } }
+.bl-form-surface { max-width: 48rem; }
+.bl-form-surface .bl-form-grid { padding: 0; }
+.bl-form-surface .bl-fieldset-help { grid-column: 1 / -1; margin: 0; }
+.bl-workspace-page .bl-panel { text-align: left; }
+.bl-workspace-page .bl-panel form { gap: 1rem; max-width: 44rem; }
+.bl-workspace-page .bl-panel label { gap: .4rem; color: var(--bl-navy); font-size: .75rem; font-weight: 650; }
+.bl-workspace-page .bl-panel input, .bl-workspace-page .bl-panel select, .bl-workspace-page .bl-panel textarea, .bl-workspace-page .bl-toolbar select { min-height: 2.8rem; padding: .65rem .75rem; border-color: var(--bl-border); border-radius: .4rem; font: inherit; }
+.bl-workspace-page .bl-panel textarea { min-height: 6rem; resize: vertical; }
+.bl-workspace-page .bl-panel .bl-actions { margin-top: .35rem; }
+.bl-workspace-page .bl-panel .bl-button-primary { color: white; background: var(--bl-red); }
+.bl-workspace-page .bl-panel .bl-button-primary:hover { background: var(--bl-red-dark); }
+.bl-workspace-page .bl-panel .bl-button-secondary { color: var(--bl-navy); background: white; border-color: var(--bl-border); }
+.bl-workspace-page .bl-panel .bl-button { min-height: 2.6rem; padding: .6rem 1rem; border-radius: .4rem; }
+.bl-workspace-page .bl-modal-backdrop { overflow-y: auto; }
+.bl-workspace-page .bl-modal { overscroll-behavior: contain; }
+
+@media (max-width: 720px) {
+    .bl-page-header { align-items: stretch; flex-direction: column; }
+    .bl-page-actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+    .bl-page-actions { gap: .4rem; }
+    .bl-header-user { display: none; }
+    .bl-page-actions .bl-btn { padding: .55rem .65rem; font-size: .75rem; }
+    .bl-page-actions .bl-icon-button { margin-left: auto; }
+    .bl-facts { grid-template-columns: minmax(0, 1fr); gap: .65rem; }
+    .bl-notification-row { flex-wrap: wrap; padding: .9rem; }
+    .bl-notification-row > .bl-btn { margin-left: 3.2rem; }
+}
+
 @media (max-width: 720px) {
     .bl-workspace-page { padding: 1rem; }
     .bl-panel, .bl-data-section { padding: .9rem; }

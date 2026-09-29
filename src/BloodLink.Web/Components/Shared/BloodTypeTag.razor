@@ -1,0 +1,20 @@
+@using BloodLink.Web.Models
+<span class="bl-blood-badge @(IsPositive(Type) ? "bl-blood-pos" : "bl-blood-neg")">@Display(Type)</span>
+
+@code {
+    [Parameter] public BloodType Type { get; set; }
+
+    private static string Display(BloodType type) => type switch
+    {
+        BloodType.APositive => "A+",
+        BloodType.ANegative => "A-",
+        BloodType.BPositive => "B+",
+        BloodType.BNegative => "B-",
+        BloodType.ABPositive => "AB+",
+        BloodType.ABNegative => "AB-",
+        BloodType.OPositive => "O+",
+        _ => "O-"
+    };
+
+    private static bool IsPositive(BloodType type) => type is BloodType.APositive or BloodType.BPositive or BloodType.ABPositive or BloodType.OPositive;
+}
