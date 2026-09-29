@@ -109,6 +109,27 @@ public sealed class PresentationParityTests
     }
 
     [Fact]
+    public void Bound_dropdowns_use_typed_selects_and_readable_native_color_scheme()
+    {
+        var registration = Read("src/BloodLink.Web/Pages/FacilityRegister.razor");
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        var css = Read("src/BloodLink.Web/wwwroot/app.css");
+
+        Assert.Contains("<InputSelect class=\"bl-input bl-select\" @bind-Value=\"Form.FacilityType\">", registration, StringComparison.Ordinal);
+        Assert.Contains("<option value=\"Hospital\">Hospital</option>", registration, StringComparison.Ordinal);
+        Assert.Contains("<option value=\"BloodBank\">Blood bank</option>", registration, StringComparison.Ordinal);
+        Assert.Contains("if (Busy) return;", registration, StringComparison.Ordinal);
+        Assert.Contains("<InputSelect @bind-Value=\"SelectedBloodType\">", workspace, StringComparison.Ordinal);
+        Assert.Contains("<option value=\"APositive\">A+</option>", workspace, StringComparison.Ordinal);
+        Assert.Contains("<option value=\"ONegative\">O-</option>", workspace, StringComparison.Ordinal);
+        Assert.Contains("<option value=\"Urgent\">Urgent</option>", workspace, StringComparison.Ordinal);
+        Assert.DoesNotContain("<select ", registration, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<select ", workspace, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(".bl-select { appearance: auto; color: var(--bl-navy); color-scheme: light; }", css, StringComparison.Ordinal);
+        Assert.Contains(".bl-panel select, .bl-toolbar select { color-scheme: light; }", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Dashboards_use_role_specific_summary_fields_and_original_card_primitives()
     {
         var dashboard = Read("src/BloodLink.Web/Components/DashboardOverview.razor");

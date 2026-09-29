@@ -197,7 +197,7 @@ public sealed class FrontendSecurityTests
         foreach (var (status, expected) in new[]
         {
             (HttpStatusCode.Forbidden, "does not have permission"),
-            (HttpStatusCode.Conflict, "Reload and try again")
+            (HttpStatusCode.Conflict, "current record or state")
         })
         {
             var client = new TestApiClient(new HttpClient(new StubHandler(_ => new(status)
@@ -209,6 +209,21 @@ public sealed class FrontendSecurityTests
             Assert.Contains(expected, error.Message);
             Assert.DoesNotContain("internal server", error.Message);
         }
+    }
+
+    [Fact]
+    public async Task Login_unauthorized_response_is_not_reported_as_an_expired_session()
+    {
+        var client = new TestApiClient(new HttpClient(new StubHandler(_ => new(HttpStatusCode.Unauthorized)))
+        {
+            BaseAddress = new Uri("https://backend.example/")
+        });
+
+        var error = await Assert.ThrowsAsync<ApiException>(() => client.Read("api/v1/auth/login"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, error.StatusCode);
+        Assert.Equal("Unable to sign in with these credentials.", error.Message);
+        Assert.DoesNotContain("session has expired", error.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]
@@ -246,7 +261,8 @@ public sealed class FrontendSecurityTests
 
     private sealed class TestApiClient(HttpClient http) : BackendApiClient(http)
     {
-        public Task<string> Read(CancellationToken cancellationToken = default) => Get<string>("api/v1/test", cancellationToken);
+        public Task<string> Read(CancellationToken cancellationToken = default) => Read("api/v1/test", cancellationToken);
+        public Task<string> Read(string path, CancellationToken cancellationToken = default) => Get<string>(path, cancellationToken);
     }
 
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> response) : HttpMessageHandler

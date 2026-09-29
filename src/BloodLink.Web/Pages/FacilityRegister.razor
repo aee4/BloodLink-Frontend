@@ -33,7 +33,7 @@
                         <legend>Facility details</legend>
                         <div class="bl-form-grid">
                             <label class="bl-field"><span class="bl-label">Facility name <span>*</span></span><input class="bl-input" required maxlength="200" @bind="Form.Name" /></label>
-                            <label class="bl-field"><span class="bl-label">Facility type <span>*</span></span><select class="bl-input bl-select" @bind="Form.FacilityType"><option value="0">Hospital</option><option value="1">Blood bank</option></select></label>
+                            <label class="bl-field"><span class="bl-label">Facility type <span>*</span></span><InputSelect class="bl-input bl-select" @bind-Value="Form.FacilityType"><option value="Hospital">Hospital</option><option value="BloodBank">Blood bank</option></InputSelect></label>
                             <label class="bl-field"><span class="bl-label">Registration number <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.RegistrationNumber" /></label>
                             <label class="bl-field"><span class="bl-label">Region <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.Region" /></label>
                             <label class="bl-field"><span class="bl-label">City <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.City" /></label>
@@ -69,6 +69,7 @@
 
     private async Task Submit()
     {
+        if (Busy) return;
         Busy = true;
         Message = null;
         try

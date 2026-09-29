@@ -33,7 +33,7 @@ public abstract class BackendApiClient(HttpClient http)
         using (request)
         using (var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
         {
-            if (!response.IsSuccessStatusCode) throw await CreateException(response, cancellationToken);
+            if (!response.IsSuccessStatusCode) throw await CreateException(response, request.RequestUri?.OriginalString, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NoContent || typeof(T) == typeof(object)) return default!;
             try
             {
@@ -46,7 +46,7 @@ public abstract class BackendApiClient(HttpClient http)
         }
     }
 
-    private static async Task<ApiException> CreateException(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async Task<ApiException> CreateException(HttpResponseMessage response, string? requestPath, CancellationToken cancellationToken)
     {
         IReadOnlyDictionary<string, string[]> fields = new Dictionary<string, string[]>();
         if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -63,13 +63,22 @@ public abstract class BackendApiClient(HttpClient http)
         var message = response.StatusCode switch
         {
             HttpStatusCode.BadRequest => "Check the entered values and try again.",
+            HttpStatusCode.Unauthorized when IsLoginRequest(requestPath) => "Unable to sign in with these credentials.",
             HttpStatusCode.Unauthorized => "Your session has expired. Sign in again.",
             HttpStatusCode.Forbidden => "Your account does not have permission to do that.",
             HttpStatusCode.NotFound => "This record is unavailable or no longer exists.",
-            HttpStatusCode.Conflict => "This record changed or its current status prevents that action. Reload and try again.",
+            HttpStatusCode.Conflict => "This request conflicts with the current record or state. Check its current status and try again.",
             HttpStatusCode.TooManyRequests => "Too many requests. Wait a moment and try again.",
             _ => "BloodLink could not complete that request. Please try again later."
         };
         return new ApiException(response.StatusCode, message, fields);
+    }
+
+    private static bool IsLoginRequest(string? requestPath)
+    {
+        var path = Uri.TryCreate(requestPath, UriKind.Absolute, out var absoluteUri)
+            ? absoluteUri.AbsolutePath
+            : requestPath;
+        return string.Equals(path?.TrimStart('/'), "api/v1/auth/login", StringComparison.OrdinalIgnoreCase);
     }
 }

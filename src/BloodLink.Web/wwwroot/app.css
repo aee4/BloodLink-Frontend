@@ -159,7 +159,7 @@ h1:focus { outline: none; }
 .bl-input { display: block; width: 100%; min-height: 2.75rem; padding: .66rem .8rem; color: var(--bl-navy); background: white; border: 1px solid rgba(15,39,68,.18); border-radius: .43rem; font-size: .83rem; line-height: 1.35; outline: 0; transition: border-color .15s, box-shadow .15s; }
 .bl-input::placeholder { color: var(--bl-placeholder); opacity: 1; }
 .bl-input:focus { border-color: var(--bl-navy); box-shadow: 0 0 0 3px rgba(15,39,68,.08); }
-.bl-select { appearance: auto; color: var(--bl-navy); }
+.bl-select { appearance: auto; color: var(--bl-navy); color-scheme: light; }
 .bl-textarea { min-height: 5.25rem; resize: vertical; }
 .bl-password-field { position: relative; }
 .bl-password-field .bl-input { padding-right: 3rem; }
@@ -544,6 +544,7 @@ a.bl-nav-item.active { color: white; background: rgba(190,29,44,.3); }
 .bl-auth-panel form, .bl-panel form { display: flex; flex-direction: column; gap: .85rem; }
 .bl-panel label, .bl-toolbar label { display: grid; gap: .35rem; color: #42526b; font-size: .84rem; font-weight: 600; }
 .bl-panel input, .bl-panel select, .bl-panel textarea, .bl-toolbar select { width: 100%; min-height: 2.75rem; padding: .55rem .7rem; color: var(--bl-navy); background: white; border: 1px solid rgba(15,39,68,.2); border-radius: .35rem; }
+.bl-panel select, .bl-toolbar select { color-scheme: light; }
 .bl-auth-panel > p { margin-top: 1.2rem; color: var(--bl-muted); font-size: .8rem; }
 .bl-form-grid { align-items: start; }
 .bl-form-grid h2, .bl-form-grid > p, .bl-form-grid > button { grid-column: 1 / -1; }
