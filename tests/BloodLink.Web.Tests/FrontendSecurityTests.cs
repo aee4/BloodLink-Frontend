@@ -50,7 +50,7 @@ public sealed class FrontendSecurityTests
         await auth.Login(user.Email, "test-password");
 
         Assert.Equal("access-secret", session.AccessToken);
-        Assert.Equal("refresh-secret", session.RefreshToken);
+        Assert.Null(typeof(SessionStore).GetProperty("RefreshToken"));
         Assert.Equal("refresh-secret", storage.Value);
         Assert.DoesNotContain("access-secret", storage.Value, StringComparison.Ordinal);
     }
@@ -80,7 +80,7 @@ public sealed class FrontendSecurityTests
     {
         var storage = new MemorySessionMaterialStore { Value = "refresh-old" };
         var session = new SessionStore(storage);
-        session.Set("access-old", "refresh-old", NewUser());
+        session.Set("access-old", NewUser());
         var refreshCount = 0;
         using var refresh = new SessionRefreshService(new HttpClient(new StubHandler(_ =>
         {
@@ -123,14 +123,13 @@ public sealed class FrontendSecurityTests
     {
         var storage = new MemorySessionMaterialStore { Value = "expired-refresh" };
         var session = new SessionStore(storage);
-        session.Set("expired-access", "expired-refresh", NewUser());
+        session.Set("expired-access", NewUser());
         using var refresh = new SessionRefreshService(
             new HttpClient(new StubHandler(_ => new(HttpStatusCode.Unauthorized)))
             { BaseAddress = new Uri("https://api.example.test/") }, session);
 
         Assert.False(await refresh.RefreshAsync("expired-access"));
         Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
         Assert.Null(storage.Value);
     }
 
@@ -139,14 +138,14 @@ public sealed class FrontendSecurityTests
     {
         var storage = new MemorySessionMaterialStore { Value = "refresh-value" };
         var session = new SessionStore(storage);
-        session.Set("access-value", "refresh-value", NewUser());
+        session.Set("access-value", NewUser());
+        await storage.WriteRefreshTokenAsync("refresh-value");
         var auth = new AuthApiClient(new HttpClient(new StubHandler(_ => new(HttpStatusCode.NoContent)))
         { BaseAddress = new Uri("https://api.example.test/") }, session);
 
         await auth.Logout();
 
         Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
         Assert.Null(session.User);
         Assert.Null(storage.Value);
     }

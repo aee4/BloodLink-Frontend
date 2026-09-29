@@ -1,21 +1,37 @@
 # Deployment
 
-Publish the Release output from `src/BloodLink.Web` to a static HTTPS host with SPA fallback routing to `index.html`. Before publishing, provide an environment-specific `wwwroot/appsettings.json` containing only:
+## AWS production hosting
 
-```json
-{
-  "Api": {
-    "BaseUrl": "https://api.example.org/"
-  }
-}
+The frontend is hosted by the `bloodlink-frontend-prod` CloudFormation stack in `eu-north-1`. It provisions an encrypted, private S3 bucket and a CloudFront distribution using Origin Access Control (OAC). S3 public access is blocked, and the bucket policy permits reads only from that distribution. The default CloudFront certificate provides the HTTPS `cloudfront.net` origin. No backend resource is managed by this stack.
+
+The production API base URL in `src/BloodLink.Web/wwwroot/appsettings.json` is `https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com`. This value is public configuration. Do not put access tokens, refresh tokens, credentials or keys in appsettings or published files. Access tokens exist in memory; refresh-session material is read from and written to same-tab `sessionStorage` through the browser storage module.
+
+Deploy from the repository root with:
+
+```powershell
+./scripts/deploy-aws-cloudfront.ps1
 ```
 
-Set the backend CORS allowlist to the exact frontend origin. Configure HTTPS and response security headers at the hosting layer. A production CSP should be similarly restrictive to:
+The script requires the `bloodlink-deployer` IAM identity and configured region `eu-north-1`. It publishes Release `wwwroot`, deploys only the named frontend stack, syncs only its generated dedicated bucket, removes stale files from that bucket, invalidates CloudFront, and waits for the distribution and invalidation to complete. Files are uploaded with revalidation required by default; files whose names contain a fingerprint receive a one-year immutable cache policy. CloudFront's cache policy honors those origin metadata values. The deploy output includes the bucket, distribution ID, CloudFront domain and complete HTTPS URL.
 
-```text
-default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.example.org
+CloudFront maps S3 `403` and `404` responses to `/index.html` with status `200` and error caching TTL `0`, allowing direct navigation to Blazor routes. The distribution redirects HTTP viewers to HTTPS and compresses responses. Its response headers include a restrictive CSP (`connect-src 'self' https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com`), frame/content-type protections, HSTS, referrer and permissions policies. Blazor WebAssembly's `wasm-unsafe-eval` is allowed for runtime compilation; other script sources are same-origin.
+
+CloudFront URL: `https://d2z1pcfp95dfwd.cloudfront.net` (distribution `E2CFHIKLVUFJJ9`).
+
+## Teardown
+
+After confirming the bucket name from the stack outputs, remove only that dedicated bucket's objects and then delete the frontend stack:
+
+```powershell
+aws s3 rm s3://<BucketName> --recursive --region eu-north-1
+aws cloudformation delete-stack --stack-name bloodlink-frontend-prod --region eu-north-1
+aws cloudformation wait stack-delete-complete --stack-name bloodlink-frontend-prod --region eu-north-1
 ```
 
-Replace `https://api.example.org` with the exact deployed API origin. Do not add wildcard CORS, embed credentials, or log authorization headers. Session refresh material is stored in same-tab `sessionStorage`; because it is readable by scripts on the frontend origin, production deployments should assess a backend-for-frontend with HttpOnly cookies. The application does not send email and requires no frontend secrets.
+This teardown removes the frontend distribution, OAC, policies and bucket. It does not touch backend resources.
 
-Build with `dotnet publish src/BloodLink.Web --configuration Release`. Verify direct navigation and refresh fallback for every route, then smoke test login, role dashboards and representative writes against the intended backend environment.
+## Backend CORS and workflow testing
+
+After deployment, configure backend CORS to allow the exact CloudFront HTTPS origin printed by the deployment script. Do not use wildcard origins. Until that exact origin is added to backend CORS, cross-origin API calls can fail by design. Do not claim authenticated end-to-end success before CORS is updated. No backend CORS change is part of this frontend deployment.
+
+Once CORS is configured, verify direct navigation and refresh fallback for the routes in `docs/ROUTES.md`, then exercise login, role dashboards and representative workflows against the intended backend environment.

@@ -14,7 +14,6 @@ public sealed class SessionRefreshService(HttpClient refreshHttp, SessionStore s
         {
             var refreshToken = await session.ReadStoredRefreshTokenAsync(cancellationToken);
             if (string.IsNullOrWhiteSpace(refreshToken)) return false;
-            session.SetRefreshToken(refreshToken);
             return await RefreshAsync(null, cancellationToken);
         }
         catch
@@ -32,7 +31,7 @@ public sealed class SessionRefreshService(HttpClient refreshHttp, SessionStore s
             if (failedAccessToken is not null && session.AccessToken != failedAccessToken)
                 return session.AccessToken is not null;
 
-            var refreshToken = session.RefreshToken;
+            var refreshToken = await session.ReadStoredRefreshTokenAsync(cancellationToken);
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 await ClearSessionAsync(cancellationToken);
