@@ -1,9 +1,13 @@
 @inject NavigationManager Navigation
 @inject SessionRestoreService SessionRestore
+@inject ApplicationInitializationGate Initialization
 
-@if (!initialized)
+@if (!Initialization.IsInitialized)
 {
-    <div class="bl-page" role="status" aria-live="polite">Restoring session...</div>
+    <div class="bl-startup-screen" role="status" aria-live="polite" aria-busy="true">
+        <span class="bl-startup-spinner" aria-hidden="true"></span>
+        <span>Loading BloodLink...</span>
+    </div>
 }
 else
 {
@@ -23,11 +27,5 @@ else
 }
 
 @code {
-    private bool initialized;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await SessionRestore.RestoreAsync();
-        initialized = true;
-    }
+    protected override Task OnInitializedAsync() => Initialization.InitializeAsync(() => SessionRestore.RestoreAsync());
 }

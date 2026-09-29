@@ -14,11 +14,10 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="bl-startup-screen" role="status" aria-live="polite" aria-busy="true">
+            <span class="bl-startup-spinner" aria-hidden="true"></span>
+            <span>Loading BloodLink...</span>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

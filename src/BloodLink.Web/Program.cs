@@ -20,6 +20,7 @@ builder.Services.AddScoped(sp => new SessionRefreshService(
     new HttpClient(new HttpClientHandler()) { BaseAddress = apiUri },
     sp.GetRequiredService<SessionStore>()));
 builder.Services.AddScoped<SessionRestoreService>();
+builder.Services.AddScoped<ApplicationInitializationGate>();
 builder.Services.AddScoped<BearerHandler>();
 builder.Services.AddScoped(sp =>
 {

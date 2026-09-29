@@ -52,6 +52,51 @@ public sealed class PresentationParityTests
     }
 
     [Fact]
+    public async Task Startup_shell_waits_for_one_session_restore_and_uses_a_stable_loading_screen()
+    {
+        var app = Read("src/BloodLink.Web/App.razor");
+        var document = Read("src/BloodLink.Web/wwwroot/index.html");
+        var css = Read("src/BloodLink.Web/wwwroot/app.css");
+        var gateStart = app.IndexOf("@if (!Initialization.IsInitialized)", StringComparison.Ordinal);
+        var routeStart = app.IndexOf("<Router", StringComparison.Ordinal);
+        var gateEnd = app.IndexOf("else", gateStart, StringComparison.Ordinal);
+
+        Assert.True(gateStart >= 0 && gateEnd > gateStart && routeStart > gateEnd);
+        Assert.Contains("Initialization.InitializeAsync(() => SessionRestore.RestoreAsync())", app, StringComparison.Ordinal);
+        Assert.Contains("class=\"bl-startup-screen\"", app, StringComparison.Ordinal);
+        Assert.Contains("class=\"bl-startup-screen\"", document, StringComparison.Ordinal);
+        Assert.Contains("href=\"app.css\"", document, StringComparison.Ordinal);
+        Assert.DoesNotContain("<style>", document, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("class=\"loading-progress\"", document, StringComparison.Ordinal);
+        Assert.DoesNotContain("class=\"bl-page\"", app, StringComparison.Ordinal);
+        Assert.Contains(".bl-startup-screen {", css, StringComparison.Ordinal);
+        Assert.Contains("min-height: 100vh", css, StringComparison.Ordinal);
+        Assert.Contains("@media (prefers-reduced-motion: reduce)", css, StringComparison.Ordinal);
+
+        var gate = new BloodLink.Web.Services.Authentication.ApplicationInitializationGate();
+        var releaseRestore = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var restoreCalls = 0;
+        Task RestoreSlowly()
+        {
+            restoreCalls++;
+            return releaseRestore.Task;
+        }
+
+        var firstInitialization = gate.InitializeAsync(RestoreSlowly);
+        var repeatedInitialization = gate.InitializeAsync(RestoreSlowly);
+
+        Assert.False(gate.IsInitialized);
+        Assert.Same(firstInitialization, repeatedInitialization);
+        Assert.Equal(1, restoreCalls);
+
+        releaseRestore.SetResult();
+        await firstInitialization;
+
+        Assert.True(gate.IsInitialized);
+        Assert.Equal(1, restoreCalls);
+    }
+
+    [Fact]
     public void Registration_keeps_both_standalone_route_contracts_and_uses_original_form_styles()
     {
         var registration = Read("src/BloodLink.Web/Pages/FacilityRegister.razor");
