@@ -1,9 +1,16 @@
 @inject AuthApiClient Auth
 @inject NavigationManager Navigation
 
-<aside class="bl-sidebar" aria-label="Main navigation">
-    <div class="bl-sidebar-brand"><span class="bl-sidebar-logo" aria-hidden="true">B</span><div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@User?.Email</span></div></div>
-    <nav class="bl-sidebar-nav">
+<aside class="bl-sidebar" aria-label="Main navigation" @onkeydown="HandleKeyDown">
+    <div class="bl-sidebar-brand">
+        <span class="bl-sidebar-logo" aria-hidden="true"><AppIcon Name="droplet" Size="16" Filled="true" /></span>
+        <div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@User?.Email</span></div>
+        <button class="bl-sidebar-toggle" type="button" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
+                aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="workspace-navigation" @onclick="ToggleMenu">
+            <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="20" />
+        </button>
+    </div>
+    <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" @onclick="CloseMenu">
         <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><span aria-hidden="true">▦</span><span>Dashboard</span></NavLink>
         @if (IsSystem)
         {
@@ -26,6 +33,7 @@
                 }
                 else
                 {
+                    <NavLink class="bl-nav-item" href="/inventory" Match="NavLinkMatch.All"><span aria-hidden="true">▤</span><span>Inventory</span></NavLink>
                     <NavLink class="bl-nav-item" href="/needs/new">Submit need</NavLink>
                     <NavLink class="bl-nav-item" href="/needs/mine">My needs</NavLink>
                 }
@@ -42,10 +50,17 @@
 
 @code {
     [Parameter] public ApiUser? User { get; set; }
+    private bool _menuOpen;
     private bool IsSystem => User?.Roles.Contains("SystemAdmin") == true;
     private bool IsAdmin => User?.Roles.Contains("FacilityAdmin") == true;
     private string RoleName => IsSystem ? "System Admin" : IsAdmin ? "Facility Admin" : "Facility Staff";
     private string Initials => $"{(User?.FirstName ?? "B").FirstOrDefault()}{(User?.LastName ?? "L").FirstOrDefault()}".ToUpperInvariant();
+    private void ToggleMenu() => _menuOpen = !_menuOpen;
+    private void CloseMenu() => _menuOpen = false;
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseMenu();
+    }
 
     private async Task SignOut()
     {

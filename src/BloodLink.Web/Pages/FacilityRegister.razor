@@ -1,55 +1,81 @@
-@page "/facilities/register"
 @page "/facility/register"
+@page "/facilities/register"
 @attribute [AllowAnonymous]
 @inject FacilityApiClient Facilities
 
-<PageTitle>Register a facility | BloodLink</PageTitle>
-<section class="bl-page bl-public-form">
-    <a class="bl-brand" href="/">BloodLink</a><h1>Register your facility</h1>
-    @if (Submitted is not null)
-    {
-        <div class="bl-alert bl-alert-success" role="status">
-            <h2>Registration received</h2>
-            @if (Submitted.Status == FacilityStatus.Approved)
-            { <p>This Development facility is approved and ready to use. Sign in with the administrator account you created.</p> }
+<PageTitle>Register your facility | BloodLink</PageTitle>
+<main class="bl-form-page">
+    <div class="bl-form-page-inner">
+        <a class="bl-back-link" href="/"><AppIcon Name="arrow-right" Size="14" Class="bl-back-arrow" /> Back to BloodLink</a>
+        <section class="bl-form-card" aria-labelledby="register-title">
+            @if (Submitted is not null)
+            {
+                <div class="bl-success-card">
+                    <span class="bl-success-icon"><AppIcon Name="circle-check" Size="25" /></span>
+                    <h1 id="register-title">Registration received</h1>
+                    @if (Submitted.Status == FacilityStatus.Approved)
+                    { <p>This facility is approved and ready to use. Sign in with the administrator account you created.</p> }
+                    else
+                    { <p>Your facility is pending approval. You can sign in after a System Admin reviews the registration.</p> }
+                    <a class="bl-btn bl-btn-primary bl-btn-lg" href="/account/login">Continue to sign in</a>
+                </div>
+            }
             else
-            { <p>Your facility is pending approval. You can sign in after a System Admin reviews the registration.</p> }
-        </div>
-        <a class="bl-button bl-button-primary" href="/account/login">Continue to sign in</a>
-    }
-    else
-    {
-        <Feedback Message="@Message" />
-        <form class="bl-form-grid" @onsubmit="Submit" @onsubmit:preventDefault>
-            <label>Facility name<input required maxlength="200" @bind="Form.Name" /></label>
-            <label>Facility type<select @bind="Form.FacilityType"><option value="0">Hospital</option><option value="1">Blood bank</option></select></label>
-            <label>Registration number<input required maxlength="100" @bind="Form.RegistrationNumber" /></label>
-            <label>Region<input required maxlength="100" @bind="Form.Region" /></label>
-            <label>City<input required maxlength="100" @bind="Form.City" /></label>
-            <label>Address<input required maxlength="500" @bind="Form.Address" /></label>
-            <label>Facility contact email<input type="email" required @bind="Form.ContactEmail" /></label>
-            <label>Facility contact phone<input type="tel" required @bind="Form.ContactPhone" /></label>
-            <h2>Facility administrator</h2>
-            <label>First name<input required @bind="Form.AdminFirstName" /></label>
-            <label>Last name<input required @bind="Form.AdminLastName" /></label>
-            <label>Administrator email<input type="email" required @bind="Form.AdminEmail" /></label>
-            <label>Administrator phone<input type="tel" required @bind="Form.AdminPhoneNumber" /></label>
-            <label>Password<input type="password" required autocomplete="new-password" minlength="12" @bind="Form.AdminPassword" aria-describedby="password-requirements" /></label>
-            <p id="password-requirements">Use at least 12 characters and meet the password policy shown by your administrator.</p>
-            <button class="bl-button bl-button-primary" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button>
-        </form>
-    }
-</section>
+            {
+                <div class="bl-form-card-heading">
+                    <span class="bl-form-logo"><AppIcon Name="droplet" Size="21" Filled="true" /></span>
+                    <h1 id="register-title">Register your facility</h1>
+                    <p>Join the BloodLink network. Facility and administrator details will be reviewed by the BloodLink team.</p>
+                </div>
+                <Feedback Message="@Message" />
+                <form class="bl-form-grid" @onsubmit="Submit" @onsubmit:preventDefault>
+                    <fieldset class="bl-fieldset bl-field-full">
+                        <legend>Facility details</legend>
+                        <div class="bl-form-grid">
+                            <label class="bl-field"><span class="bl-label">Facility name <span>*</span></span><input class="bl-input" required maxlength="200" @bind="Form.Name" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility type <span>*</span></span><select class="bl-input bl-select" @bind="Form.FacilityType"><option value="0">Hospital</option><option value="1">Blood bank</option></select></label>
+                            <label class="bl-field"><span class="bl-label">Registration number <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.RegistrationNumber" /></label>
+                            <label class="bl-field"><span class="bl-label">Region <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.Region" /></label>
+                            <label class="bl-field"><span class="bl-label">City <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.City" /></label>
+                            <label class="bl-field bl-field-full"><span class="bl-label">Address <span>*</span></span><input class="bl-input" required maxlength="500" @bind="Form.Address" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility contact email <span>*</span></span><input class="bl-input" type="email" required @bind="Form.ContactEmail" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility contact phone <span>*</span></span><input class="bl-input" type="tel" required @bind="Form.ContactPhone" /></label>
+                        </div>
+                    </fieldset>
+                    <fieldset class="bl-fieldset bl-field-full">
+                        <legend>Facility administrator</legend>
+                        <p class="bl-fieldset-help">This account will manage the facility after approval.</p>
+                        <div class="bl-form-grid">
+                            <label class="bl-field"><span class="bl-label">First name <span>*</span></span><input class="bl-input" required @bind="Form.AdminFirstName" /></label>
+                            <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><input class="bl-input" required @bind="Form.AdminLastName" /></label>
+                            <label class="bl-field"><span class="bl-label">Administrator email <span>*</span></span><input class="bl-input" type="email" required @bind="Form.AdminEmail" /></label>
+                            <label class="bl-field"><span class="bl-label">Administrator phone <span>*</span></span><input class="bl-input" type="tel" required @bind="Form.AdminPhoneNumber" /></label>
+                            <label class="bl-field bl-field-full"><span class="bl-label">Password <span>*</span></span><input class="bl-input" type="password" required autocomplete="new-password" minlength="12" @bind="Form.AdminPassword" aria-describedby="password-requirements" /></label>
+                            <p id="password-requirements" class="bl-fieldset-help">Use at least 12 characters and follow the password policy shown by your administrator.</p>
+                        </div>
+                    </fieldset>
+                    <div class="bl-form-actions"><button class="bl-btn bl-btn-danger bl-btn-lg" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button></div>
+                </form>
+            }
+        </section>
+    </div>
+</main>
 
 @code {
     private RegistrationForm Form { get; set; } = new();
     private FacilityDto? Submitted { get; set; }
     private string? Message { get; set; }
     private bool Busy { get; set; }
+
     private async Task Submit()
     {
-        Busy = true; Message = null;
-        try { Submitted = await Facilities.Register(new(Form.Name, Form.FacilityType, Form.RegistrationNumber, Form.Region, Form.City, Form.Address, Form.ContactEmail, Form.ContactPhone, Form.AdminFirstName, Form.AdminLastName, Form.AdminEmail, Form.AdminPhoneNumber, Form.AdminPassword)); Form.AdminPassword = ""; }
+        Busy = true;
+        Message = null;
+        try
+        {
+            Submitted = await Facilities.Register(new(Form.Name, Form.FacilityType, Form.RegistrationNumber, Form.Region, Form.City, Form.Address, Form.ContactEmail, Form.ContactPhone, Form.AdminFirstName, Form.AdminLastName, Form.AdminEmail, Form.AdminPhoneNumber, Form.AdminPassword));
+            Form.AdminPassword = "";
+        }
         catch (ApiException ex) { Message = ex.Message; }
         finally { Busy = false; }
     }

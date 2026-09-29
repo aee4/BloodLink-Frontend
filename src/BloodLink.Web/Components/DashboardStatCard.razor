@@ -1,0 +1,11 @@
+<article class="bl-stat-card @(Accent ? "bl-stat-accent" : null)">
+    <div><p class="bl-stat-label">@Label</p><p class="bl-stat-value">@Value</p></div>
+    <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="@Icon" Size="19" /></span>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "activity";
+    [Parameter] public bool Accent { get; set; }
+}

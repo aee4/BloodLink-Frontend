@@ -18,6 +18,14 @@ CloudFront maps S3 `403` and `404` responses to `/index.html` with status `200` 
 
 CloudFront URL: `https://d2z1pcfp95dfwd.cloudfront.net` (distribution `E2CFHIKLVUFJJ9`).
 
+## Production UI parity and cache verification
+
+The visual and interaction source of truth is the read-only `BloodBankSys` commit `24bc919646cc77c12df47ccb25df0aeb2a7681c7`. Keep the frontend as Blazor WebAssembly with its existing typed API clients and browser session services. The production API remains `https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com`. The parity inventory, including unfinished authenticated-page differences, is tracked in `docs/UI_VISUAL_PARITY.md`.
+
+Do not redeploy until that matrix's material authenticated-view differences are resolved and role-based verification is complete. When ready, `scripts/deploy-aws-cloudfront.ps1` publishes only the frontend, uploads non-fingerprinted files with `Cache-Control: no-cache, no-store, must-revalidate`, gives fingerprinted files immutable caching, invalidates `/*`, and waits for the distribution and invalidation. This forces revalidation of both `index.html` and `appsettings.json`. After deployment, confirm both responses carry the revalidation policy, CloudFront reports `Deployed`, and the invalidation is `Completed`.
+
+Use a fresh isolated Chromium context for production checks so browser cache cannot mask the new bundle. Check the production CSP, console and network requests, including the illustration and generated Blazor assets. There is no service worker in this standalone application. Keep screenshots and sanitized browser notes under the ignored `artifacts/ui-parity/` directory; never store credentials, tokens, or authenticated personal data there.
+
 ## Teardown
 
 After confirming the bucket name from the stack outputs, remove only that dedicated bucket's objects and then delete the frontend stack:

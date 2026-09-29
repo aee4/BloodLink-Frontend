@@ -108,6 +108,12 @@
     }
     @if (Data is not null)
     {
+        if (Path == "/dashboard" && Data is System.Text.Json.JsonElement dashboardData)
+        {
+            <DashboardOverview Data="dashboardData" />
+        }
+        else
+        {
         @if (Path == "/notifications")
         { <div class="bl-actions"><button class="bl-btn bl-btn-outline" @onclick="MarkAllNotificationsRead">Mark all as read</button></div> }
         @if (Path == "/system/facilities/" + CurrentId)
@@ -129,6 +135,7 @@
         @if (TimelineRows.Count > 0)
         {
             <section class="bl-data-section"><h2>Activity</h2><div class="bl-table-wrap"><table class="bl-table"><thead><tr>@foreach (var key in TimelineRows[0].Keys) { <th scope="col">@key</th> }</tr></thead><tbody>@foreach (var row in TimelineRows) { <tr>@foreach (var value in row.Values) { <td>@value</td> }</tr>}</tbody></table></div></section>
+        }
         }
     }
 </div>

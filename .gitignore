@@ -4,6 +4,7 @@ obj/
 .vscode/
 TestResults/
 coverage/
+artifacts/ui-parity/
 *.user
 *.suo
 *.log

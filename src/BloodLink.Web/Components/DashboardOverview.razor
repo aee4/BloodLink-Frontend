@@ -1,0 +1,119 @@
+@using System.Text.Json
+@inject SessionStore Session
+
+@if (IsSystemAdmin)
+{
+    <div class="bl-stat-grid bl-stat-grid-4">
+        <DashboardStatCard Label="Pending facilities" Value="@Value("pendingFacilities")" Icon="building" Accent="true" />
+        <DashboardStatCard Label="Approved facilities" Value="@Value("approvedFacilities")" Icon="building" />
+        <DashboardStatCard Label="Suspended facilities" Value="@Value("suspendedFacilities")" Icon="shield" />
+        <DashboardStatCard Label="Active requests" Value="@Value("activeRequests")" Icon="inbox" />
+    </div>
+    <div class="bl-card-grid bl-card-grid-2">
+        <section class="bl-card">
+            <div class="bl-card-head"><h2>Facilities awaiting review</h2><a class="bl-link" href="/system/facilities">View facilities</a></div>
+            @if (Items("pendingReviews").Count == 0) { <DashboardEmptyState Title="No pending reviews" Description="New facility registrations will appear here." /> }
+            else
+            {
+                <div class="bl-list">
+                    @foreach (var item in Items("pendingReviews"))
+                    {
+                        <a class="bl-dash-row" href="@($"/system/facilities/{Text(item, "id")}")">
+                            <span class="bl-fac-avatar" aria-hidden="true">@Initial(Text(item, "name"))</span>
+                            <span class="bl-dash-row-main"><strong>@Text(item, "name")</strong><small>@Text(item, "city"), @Text(item, "region")</small></span>
+                            <AppIcon Name="chevron-right" Size="16" />
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+        <DashboardActivityCard Items="@Items("recentActivity")" />
+    </div>
+}
+else if (IsFacilityAdmin)
+{
+    <div class="bl-stat-grid bl-stat-grid-4">
+        <DashboardStatCard Label="Open needs" Value="@Value("openNeeds")" Icon="clipboard-list" Accent="true" />
+        <DashboardStatCard Label="Requests sent" Value="@Value("sentRequests")" Icon="send" />
+        <DashboardStatCard Label="Requests received" Value="@Value("receivedRequests")" Icon="inbox" />
+        <DashboardStatCard Label="Low stock items" Value="@Value("lowStockItems")" Icon="alert-triangle" Accent="true" />
+    </div>
+    <div class="bl-stat-grid bl-stat-grid-3">
+        <DashboardStatCard Label="Total inventory units" Value="@Value("totalInventoryUnits")" Icon="package" />
+        <DashboardStatCard Label="Available units" Value="@Value("availableInventoryUnits")" Icon="check" />
+        <DashboardStatCard Label="Unread notifications" Value="@Value("unreadNotifications")" Icon="bell" />
+    </div>
+    <div class="bl-card-grid bl-card-grid-2">
+        <section class="bl-card">
+            <div class="bl-card-head"><h2>Needs awaiting review</h2><a class="bl-link" href="/needs">View needs</a></div>
+            @if (Items("pendingNeeds").Count == 0) { <DashboardEmptyState Title="No open needs" Description="New facility needs will appear here." /> }
+            else
+            {
+                <div class="bl-list">
+                    @foreach (var item in Items("pendingNeeds"))
+                    {
+                        <a class="bl-dash-row" href="@($"/needs/{Text(item, "id")}")">
+                            <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="droplet" Size="16" /></span>
+                            <span class="bl-dash-row-main"><strong>@Text(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Text(item, "urgency") · @Text(item, "status")</small></span>
+                            <AppIcon Name="chevron-right" Size="16" />
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+        <DashboardActivityCard Items="@Items("recentActivity")" />
+    </div>
+}
+else
+{
+    <div class="bl-stat-grid bl-stat-grid-3">
+        <DashboardStatCard Label="My open needs" Value="@Value("myOpenNeeds")" Icon="clipboard-list" Accent="true" />
+        <DashboardStatCard Label="Pending review" Value="@Value("pendingReviewNeeds")" Icon="clock" />
+        <DashboardStatCard Label="Unread notifications" Value="@Value("unreadNotifications")" Icon="bell" />
+    </div>
+    <div class="bl-card-grid bl-card-grid-2">
+        <section class="bl-card">
+            <div class="bl-card-head"><h2>My recent needs</h2><a class="bl-link" href="/needs/mine">View my needs</a></div>
+            @if (Items("recentNeeds").Count == 0) { <DashboardEmptyState Title="No recent needs" Description="Submit a need when your facility requires blood stock." /> }
+            else
+            {
+                <div class="bl-list">
+                    @foreach (var item in Items("recentNeeds"))
+                    {
+                        <a class="bl-dash-row" href="@($"/needs/{Text(item, "id")}")">
+                            <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="droplet" Size="16" /></span>
+                            <span class="bl-dash-row-main"><strong>@Text(item, "bloodType") · @Text(item, "unitsNeeded") units</strong><small>@Text(item, "urgency") · @Text(item, "status")</small></span>
+                            <AppIcon Name="chevron-right" Size="16" />
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+        <section class="bl-card bl-card-inline">
+            <div class="bl-card-head"><h2>Searching needs</h2></div>
+            <p class="bl-glance-value">@Value("searchingNeeds")</p>
+            <a class="bl-link" href="/needs/mine">Open my needs</a>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public JsonElement Data { get; set; }
+
+    private bool IsSystemAdmin => Session.User?.Roles.Contains("SystemAdmin") == true;
+    private bool IsFacilityAdmin => Session.User?.Roles.Contains("FacilityAdmin") == true;
+
+    private string Value(string name) => Data.ValueKind == JsonValueKind.Object && Data.TryGetProperty(name, out var value)
+        ? value.ToString()
+        : "0";
+
+    private List<JsonElement> Items(string name) => Data.ValueKind == JsonValueKind.Object && Data.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Array
+        ? value.EnumerateArray().ToList()
+        : [];
+
+    private static string Text(JsonElement item, string name) => item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value)
+        ? value.ToString()
+        : "";
+
+    private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "B" : name[..1].ToUpperInvariant();
+}
