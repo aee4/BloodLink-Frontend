@@ -2,6 +2,15 @@
 
 Independent .NET 8 Blazor WebAssembly client for BloodLink facility registration, blood inventory, needs, requests and notifications. The application depends on the separately hosted [BloodLink Backend](https://github.com/aee4/BloodLink-Backend) HTTP API; this repository contains no server, database or domain-project references.
 
+## Production
+
+- Live frontend: https://d2z1pcfp95dfwd.cloudfront.net
+- Frontend repository: https://github.com/aee4/BloodLink-Frontend
+- Backend repository: https://github.com/aee4/BloodLink-Backend
+- Production API: https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com
+
+For local setup, install the .NET 8 SDK, then run the restore, Release build, and app commands below. Password-reset delivery is currently disabled.
+
 ## Requirements
 
 - .NET 8 SDK
