@@ -5,14 +5,21 @@ namespace BloodLink.Web.Services.Authentication;
 
 public sealed class SessionStore(ISessionMaterialStore? materialStore = null)
 {
+    private long generation;
+    private long logoutVersion;
     public string? AccessToken { get; private set; }
     public Models.ApiUser? User { get; private set; }
+    public bool IsLogoutInProgress { get; private set; }
+    public long Generation => generation;
+    public long LogoutVersion => logoutVersion;
     public event Action? Changed;
+    public event Action? TransitionChanged;
 
     public void Set(string token, Models.ApiUser user)
     {
         AccessToken = token;
         User = user;
+        generation++;
         Changed?.Invoke();
     }
 
@@ -23,7 +30,45 @@ public sealed class SessionStore(ISessionMaterialStore? materialStore = null)
             await materialStore.WriteRefreshTokenAsync(refreshToken, cancellationToken);
         AccessToken = token;
         User = user;
+        generation++;
         Changed?.Invoke();
+    }
+
+    public async Task<bool> TrySetIfCurrentAsync(string token, string refreshToken, Models.ApiUser user,
+        long expectedGeneration, CancellationToken cancellationToken = default)
+    {
+        if (IsLogoutInProgress || generation != expectedGeneration) return false;
+        if (materialStore is not null)
+            await materialStore.WriteRefreshTokenAsync(refreshToken, cancellationToken);
+        if (IsLogoutInProgress || generation != expectedGeneration)
+        {
+            if (materialStore is not null)
+                await materialStore.ClearAsync(cancellationToken);
+            return false;
+        }
+
+        AccessToken = token;
+        User = user;
+        generation++;
+        Changed?.Invoke();
+        return true;
+    }
+
+    public bool TryBeginLogout()
+    {
+        if (IsLogoutInProgress) return false;
+        IsLogoutInProgress = true;
+        generation++;
+        logoutVersion++;
+        TransitionChanged?.Invoke();
+        return true;
+    }
+
+    public void EndLogout()
+    {
+        if (!IsLogoutInProgress) return;
+        IsLogoutInProgress = false;
+        TransitionChanged?.Invoke();
     }
 
     public Task<string?> ReadStoredRefreshTokenAsync(CancellationToken cancellationToken = default) =>
@@ -37,9 +82,14 @@ public sealed class SessionStore(ISessionMaterialStore? materialStore = null)
 
     public void Clear()
     {
+        var changed = AccessToken is not null || User is not null;
         AccessToken = null;
         User = null;
-        Changed?.Invoke();
+        if (changed)
+        {
+            generation++;
+            Changed?.Invoke();
+        }
     }
 
     public async Task ClearAsync(CancellationToken cancellationToken = default)

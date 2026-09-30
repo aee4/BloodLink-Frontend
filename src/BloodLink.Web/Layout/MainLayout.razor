@@ -1,15 +1,24 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject SessionStore Session
 
 <AuthorizeView>
     <Authorized>
-        <div class="bl-app">
+        <div class="bl-app" aria-busy="@(Session.IsLogoutInProgress ? "true" : "false")">
             <a class="bl-skip-link" href="#main-content">Skip to main content</a>
             <DashboardSidebar User="Session.User" />
-            <main class="bl-app-main" id="main-content">
+            <main class="bl-app-main" id="main-content" inert="@Session.IsLogoutInProgress">
                 <div class="bl-app-content">@Body</div>
             </main>
         </div>
     </Authorized>
     <NotAuthorized>@Body</NotAuthorized>
 </AuthorizeView>
+
+@code {
+    protected override void OnInitialized() => Session.TransitionChanged += OnTransitionChanged;
+
+    private void OnTransitionChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Session.TransitionChanged -= OnTransitionChanged;
+}

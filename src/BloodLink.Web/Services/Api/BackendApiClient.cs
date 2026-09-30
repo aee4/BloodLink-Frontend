@@ -48,6 +48,10 @@ public abstract class BackendApiClient(HttpClient http)
 
     private static async Task<ApiException> CreateException(HttpResponseMessage response, string? requestPath, CancellationToken cancellationToken)
     {
+        if (response.StatusCode == HttpStatusCode.Unauthorized
+            && response.Headers.Contains("X-BloodLink-Suppress-Session-Expired"))
+            return new ApiException(response.StatusCode, "");
+
         IReadOnlyDictionary<string, string[]> fields = new Dictionary<string, string[]>();
         string? code = null;
         if (response.Content.Headers.ContentLength != 0)

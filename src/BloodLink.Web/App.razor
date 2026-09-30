@@ -1,6 +1,7 @@
 @inject NavigationManager Navigation
 @inject SessionRestoreService SessionRestore
 @inject ApplicationInitializationGate Initialization
+@inject SessionStore Session
 
 @if (!Initialization.IsInitialized)
 {
@@ -11,11 +12,21 @@
 }
 else
 {
+    <NavigationLock OnBeforeInternalNavigation="BeforeInternalNavigation" />
     <CascadingAuthenticationState>
         <Router AppAssembly="@typeof(App).Assembly">
             <Found Context="routeData">
                 <AuthorizeRouteView @key="Navigation.Uri" RouteData="routeData" DefaultLayout="@typeof(MainLayout)">
-                    <NotAuthorized><RedirectToLogin /></NotAuthorized>
+                    <NotAuthorized>
+                        @if (Session.IsLogoutInProgress)
+                        {
+                            <p class="bl-state" role="status" aria-live="polite">Signing out...</p>
+                        }
+                        else
+                        {
+                            <RedirectToLogin />
+                        }
+                    </NotAuthorized>
                 </AuthorizeRouteView>
                 <FocusOnNavigate RouteData="routeData" Selector="h1" />
             </Found>
@@ -28,4 +39,10 @@ else
 
 @code {
     protected override Task OnInitializedAsync() => Initialization.InitializeAsync(() => SessionRestore.RestoreAsync());
+
+    private void BeforeInternalNavigation(LocationChangingContext context)
+    {
+        if (Session.IsLogoutInProgress)
+            context.PreventNavigation();
+    }
 }

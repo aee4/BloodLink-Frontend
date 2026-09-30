@@ -1,17 +1,19 @@
 @inject AuthApiClient Auth
 @inject NavigationManager Navigation
 @inject FacilityApiClient Facilities
+@inject SessionStore Session
+@implements IDisposable
 
 <aside class="bl-sidebar" data-current-path="@CurrentPath" aria-label="Main navigation" @onkeydown="HandleKeyDown">
     <div class="bl-sidebar-brand">
         <span class="bl-sidebar-logo" aria-hidden="true"><AppIcon Name="droplet" Size="16" Filled="true" /></span>
         <div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@(FacilityName ?? User?.Email)</span></div>
-        <button @ref="_menuToggle" class="bl-sidebar-toggle" type="button" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
+        <button @ref="_menuToggle" class="bl-sidebar-toggle" type="button" disabled="@Session.IsLogoutInProgress" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
                 aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="workspace-navigation" @onclick="ToggleMenu">
             <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="20" />
         </button>
     </div>
-    <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" @onclick="CloseMenu">
+    <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" aria-disabled="@Session.IsLogoutInProgress" inert="@Session.IsLogoutInProgress" @onclick="CloseMenu">
         <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><AppIcon Name="activity" Size="16" /><span>Dashboard</span></NavLink>
         @if (IsSystem)
         {
@@ -47,13 +49,14 @@
     </nav>
     <div class="bl-sidebar-user">
         <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
-        <button type="button" class="bl-nav-item bl-nav-signout" @onclick="SignOut">Sign out</button>
+        <button type="button" class="bl-nav-item bl-nav-signout" disabled="@Session.IsLogoutInProgress" @onclick="SignOut">@(Session.IsLogoutInProgress ? "Signing out..." : "Sign out")</button>
     </div>
 </aside>
 
 @code {
     [Parameter] public ApiUser? User { get; set; }
     private bool _menuOpen;
+    private bool _logoutRequested;
     private string? FacilityName;
     private bool IsSystem => User?.Roles.Contains("SystemAdmin") == true;
     private bool IsAdmin => User?.Roles.Contains("FacilityAdmin") == true;
@@ -77,6 +80,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Session.TransitionChanged += OnTransitionChanged;
         if (User?.FacilityId is null || IsSystem) return;
         try { FacilityName = (await Facilities.Mine()).Name; }
         catch (ApiException) { }
@@ -84,7 +88,24 @@
 
     private async Task SignOut()
     {
-        try { await Auth.Logout(); } catch (ApiException) { }
-        Navigation.NavigateTo("/account/login?signedOut=true", forceLoad: true);
+        if (_logoutRequested || Session.IsLogoutInProgress) return;
+        _logoutRequested = true;
+        var previousLogoutVersion = Session.LogoutVersion;
+        try
+        {
+            await Auth.Logout();
+        }
+        catch (ApiException) { }
+        catch (HttpRequestException) { }
+        finally
+        {
+            if (Session.LogoutVersion != previousLogoutVersion && Session.User is null)
+                Navigation.NavigateTo("/account/login?signedOut=true", new NavigationOptions { ReplaceHistoryEntry = true });
+            _logoutRequested = false;
+        }
     }
+
+    private void OnTransitionChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Session.TransitionChanged -= OnTransitionChanged;
 }

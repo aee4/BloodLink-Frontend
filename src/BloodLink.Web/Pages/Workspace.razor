@@ -362,7 +362,7 @@
         {
             await Auth.ChangePassword(PasswordForm.CurrentPassword, PasswordForm.NewPassword);
             PasswordForm.CurrentPassword = PasswordForm.NewPassword = PasswordForm.ConfirmPassword = "";
-            Navigation.NavigateTo("/account/login?signedOut=true", true);
+            Navigation.NavigateTo("/account/login?signedOut=true", new NavigationOptions { ReplaceHistoryEntry = true });
         }
         catch (ApiException ex)
         {

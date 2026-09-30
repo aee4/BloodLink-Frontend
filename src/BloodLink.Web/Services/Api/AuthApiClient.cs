@@ -24,14 +24,17 @@ public sealed class AuthApiClient(HttpClient http, SessionStore session) : Backe
 
     public Task<ApiUser> Current(CancellationToken cancellationToken = default) => Get<ApiUser>("api/v1/auth/me", cancellationToken);
 
-    public async Task Logout(CancellationToken cancellationToken = default)
+    public async Task<bool> Logout(CancellationToken cancellationToken = default)
     {
+        if (!session.TryBeginLogout()) return false;
         try { await Post("api/v1/auth/logout", cancellationToken); }
         finally
         {
             try { await session.ClearAsync(cancellationToken); }
             catch { session.Clear(); }
+            finally { session.EndLogout(); }
         }
+        return true;
     }
 
     public async Task ChangePassword(string current, string next, CancellationToken cancellationToken = default)

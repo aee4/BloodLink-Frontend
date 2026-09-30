@@ -25,11 +25,14 @@ public sealed class SessionRefreshService(HttpClient refreshHttp, SessionStore s
 
     public async Task<bool> RefreshAsync(string? failedAccessToken, CancellationToken cancellationToken = default)
     {
+        var expectedGeneration = session.Generation;
         await refreshGate.WaitAsync(cancellationToken);
         try
         {
+            if (session.IsLogoutInProgress) return false;
             if (failedAccessToken is not null && session.AccessToken != failedAccessToken)
                 return session.AccessToken is not null;
+            if (session.Generation != expectedGeneration) return false;
 
             var refreshToken = await session.ReadStoredRefreshTokenAsync(cancellationToken);
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -54,8 +57,8 @@ public sealed class SessionRefreshService(HttpClient refreshHttp, SessionStore s
                 return false;
             }
 
-            await session.SetAsync(refreshed.AccessToken, refreshed.RefreshToken, refreshed.User, cancellationToken);
-            return true;
+            return await session.TrySetIfCurrentAsync(refreshed.AccessToken, refreshed.RefreshToken,
+                refreshed.User, expectedGeneration, cancellationToken);
         }
         catch
         {

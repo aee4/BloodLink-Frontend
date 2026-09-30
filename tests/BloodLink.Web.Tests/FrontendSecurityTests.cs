@@ -151,6 +151,197 @@ public sealed class FrontendSecurityTests
     }
 
     [Fact]
+    public async Task Logout_is_atomic_idempotent_and_notifies_authentication_state_once()
+    {
+        var storage = new MemorySessionMaterialStore { Value = "refresh-value" };
+        var session = new SessionStore(storage);
+        session.Set("access-value", NewUser());
+        var provider = new FrontendAuthenticationStateProvider(session);
+        var notificationCount = 0;
+        provider.AuthenticationStateChanged += _ => notificationCount++;
+        var transitionCount = 0;
+        session.TransitionChanged += () => transitionCount++;
+        var logoutResponse = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var logoutRequests = 0;
+        var auth = new AuthApiClient(new HttpClient(new AsyncStubHandler(_ =>
+        {
+            Interlocked.Increment(ref logoutRequests);
+            return logoutResponse.Task;
+        }))
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        }, session);
+
+        var firstLogout = auth.Logout();
+
+        Assert.True(session.IsLogoutInProgress);
+        Assert.True(session.Principal.Identity!.IsAuthenticated);
+        Assert.False(await auth.Logout());
+        Assert.Equal(0, notificationCount);
+        Assert.Equal(1, logoutRequests);
+        Assert.True(session.IsLogoutInProgress);
+
+        logoutResponse.SetResult(new(HttpStatusCode.NoContent));
+        Assert.True(await firstLogout);
+
+        Assert.False(session.IsLogoutInProgress);
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.User);
+        Assert.Null(storage.Value);
+        Assert.Equal(1, notificationCount);
+        Assert.Equal(2, transitionCount);
+        provider.Dispose();
+    }
+
+    [Fact]
+    public async Task Unauthorized_request_finishing_during_logout_does_not_refresh_or_redirect()
+    {
+        var session = new SessionStore(new MemorySessionMaterialStore { Value = "refresh-value" });
+        session.Set("access-value", NewUser());
+        var navigation = new TestNavigationManager();
+        var refreshRequests = 0;
+        using var refresh = new SessionRefreshService(new HttpClient(new StubHandler(_ =>
+        {
+            Interlocked.Increment(ref refreshRequests);
+            return new(HttpStatusCode.Unauthorized);
+        }))
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        }, session);
+        var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finishRequest = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var downstreamRequests = 0;
+        var client = new TestApiClient(new HttpClient(new BearerHandler(session, refresh, navigation)
+        {
+            InnerHandler = new AsyncStubHandler(_ =>
+            {
+                Interlocked.Increment(ref downstreamRequests);
+                requestStarted.TrySetResult();
+                return finishRequest.Task;
+            })
+        })
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        });
+        var pendingRequest = client.Read();
+        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var logoutResponse = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var auth = new AuthApiClient(new HttpClient(new AsyncStubHandler(_ => logoutResponse.Task))
+        { BaseAddress = new Uri("https://api.example.test/") }, session);
+        var logout = auth.Logout();
+        Assert.True(session.IsLogoutInProgress);
+
+        var blockedError = await Assert.ThrowsAsync<ApiException>(() => client.Read());
+        Assert.Empty(blockedError.Message);
+        Assert.Equal(1, downstreamRequests);
+
+        finishRequest.SetResult(new(HttpStatusCode.Unauthorized));
+        var error = await Assert.ThrowsAsync<ApiException>(() => pendingRequest);
+        Assert.Equal(HttpStatusCode.Unauthorized, error.StatusCode);
+        Assert.Empty(error.Message);
+        Assert.Equal(0, refreshRequests);
+        Assert.Equal(1, downstreamRequests);
+        Assert.Empty(navigation.Navigations);
+
+        logoutResponse.SetResult(new(HttpStatusCode.NoContent));
+        Assert.True(await logout);
+        Assert.Empty(navigation.Navigations);
+    }
+
+    [Fact]
+    public async Task Unauthorized_request_with_refresh_already_in_flight_is_suppressed_if_logout_starts()
+    {
+        var session = new SessionStore(new MemorySessionMaterialStore { Value = "refresh-value" });
+        session.Set("access-value", NewUser());
+        var navigation = new TestNavigationManager();
+        var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var refreshResponse = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var refresh = new SessionRefreshService(new HttpClient(new AsyncStubHandler(_ =>
+        {
+            refreshStarted.TrySetResult();
+            return refreshResponse.Task;
+        }))
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        }, session);
+        var client = new TestApiClient(new HttpClient(new BearerHandler(session, refresh, navigation)
+        {
+            InnerHandler = new StubHandler(_ => new(HttpStatusCode.Unauthorized))
+        })
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        });
+        var pendingRequest = client.Read();
+        await refreshStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var logoutResponse = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var auth = new AuthApiClient(new HttpClient(new AsyncStubHandler(_ => logoutResponse.Task))
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        }, session);
+        var logout = auth.Logout();
+        Assert.True(session.IsLogoutInProgress);
+
+        refreshResponse.SetResult(new(HttpStatusCode.Unauthorized));
+        var error = await Assert.ThrowsAsync<ApiException>(() => pendingRequest);
+        Assert.Empty(error.Message);
+        Assert.Empty(navigation.Navigations);
+
+        logoutResponse.SetResult(new(HttpStatusCode.NoContent));
+        Assert.True(await logout);
+    }
+
+    [Fact]
+    public async Task Genuine_expired_session_still_refreshes_then_redirects_with_expired_message()
+    {
+        var session = new SessionStore(new MemorySessionMaterialStore { Value = "expired-refresh" });
+        session.Set("expired-access", NewUser());
+        var navigation = new TestNavigationManager();
+        using var refresh = new SessionRefreshService(new HttpClient(new StubHandler(_ => new(HttpStatusCode.Unauthorized)))
+        { BaseAddress = new Uri("https://api.example.test/") }, session);
+        var client = new TestApiClient(new HttpClient(new BearerHandler(session, refresh, navigation)
+        {
+            InnerHandler = new StubHandler(_ => new(HttpStatusCode.Unauthorized))
+        })
+        {
+            BaseAddress = new Uri("https://api.example.test/")
+        });
+
+        var error = await Assert.ThrowsAsync<ApiException>(() => client.Read());
+
+        Assert.Contains("session has expired", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(navigation.Navigations);
+        Assert.Contains("/account/login?returnUrl=", navigation.Navigations[0].Uri, StringComparison.Ordinal);
+        Assert.Null(session.AccessToken);
+    }
+
+    [Fact]
+    public void Logout_transition_guards_navigation_disables_authenticated_actions_and_replaces_history()
+    {
+        var root = FindRepositoryRoot();
+        var app = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/App.razor"));
+        var layout = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/Layout/MainLayout.razor"));
+        var sidebar = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/Layout/DashboardSidebar.razor"));
+        var redirect = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/Components/RedirectToLogin.razor"));
+        var login = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/Pages/Login.razor"));
+        var workspace = File.ReadAllText(Path.Combine(root, "src/BloodLink.Web/Pages/Workspace.razor"));
+
+        Assert.Contains("<NavigationLock OnBeforeInternalNavigation=\"BeforeInternalNavigation\" />", app, StringComparison.Ordinal);
+        Assert.Contains("context.PreventNavigation()", app, StringComparison.Ordinal);
+        Assert.Contains("Session.IsLogoutInProgress", app, StringComparison.Ordinal);
+        Assert.Contains("inert=\"@Session.IsLogoutInProgress\"", layout, StringComparison.Ordinal);
+        Assert.Contains("disabled=\"@Session.IsLogoutInProgress\"", sidebar, StringComparison.Ordinal);
+        Assert.Contains("ReplaceHistoryEntry = true", sidebar, StringComparison.Ordinal);
+        Assert.Contains("ReplaceHistoryEntry = true", redirect, StringComparison.Ordinal);
+        Assert.DoesNotContain("forceLoad: true", sidebar, StringComparison.Ordinal);
+        Assert.Contains("Navigation.NavigateTo(ReturnPath.LocalOrDashboard(ReturnUrl))", login, StringComparison.Ordinal);
+        Assert.DoesNotContain("forceLoad: true", login, StringComparison.Ordinal);
+        Assert.Contains("Navigation.NavigateTo(\"/account/login?signedOut=true\", new NavigationOptions { ReplaceHistoryEntry = true })", workspace, StringComparison.Ordinal);
+        Assert.DoesNotContain("NavigateTo(\"/account/login?signedOut=true\", true)", workspace, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Compiled_route_table_contains_required_routes()
     {
         var routes = typeof(App).Assembly.GetTypes()
@@ -280,6 +471,14 @@ public sealed class FrontendSecurityTests
     private static ApiUser NewUser(string email = "person@example.test") =>
         new("user-1", email, "A", "User", Guid.NewGuid(), ["FacilityAdmin"], FacilityStatus.Approved, false);
 
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "BloodLink.Frontend.sln")))
+            directory = directory.Parent;
+        return directory?.FullName ?? throw new DirectoryNotFoundException("Could not locate the frontend repository root.");
+    }
+
     private static string TokenJson(string access, string refresh, ApiUser user) => JsonSerializer.Serialize(new
     {
         accessToken = access,
@@ -308,6 +507,7 @@ public sealed class FrontendSecurityTests
     private sealed class TestNavigationManager : NavigationManager
     {
         public TestNavigationManager() => Initialize("https://frontend.example/", "https://frontend.example/needs/new");
-        protected override void NavigateToCore(string uri, bool forceLoad) { }
+        public List<(string Uri, bool ForceLoad)> Navigations { get; } = [];
+        protected override void NavigateToCore(string uri, bool forceLoad) => Navigations.Add((uri, forceLoad));
     }
 }

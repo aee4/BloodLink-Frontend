@@ -7,6 +7,7 @@
     {
         var current = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
         var safe = ReturnPath.IsLocal(current) ? current : "/dashboard";
-        Navigation.NavigateTo($"/account/login?returnUrl={Uri.EscapeDataString(safe)}");
+        Navigation.NavigateTo($"/account/login?returnUrl={Uri.EscapeDataString(safe)}",
+            new NavigationOptions { ReplaceHistoryEntry = true });
     }
 }

@@ -319,6 +319,7 @@ a.bl-nav-item.active { color: white; background: rgba(190,29,44,.3); }
 .bl-sidebar-user-text span { color: #8fa0bb; font-size: .66rem; }
 .bl-nav-signout { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .58rem .8rem; color: #aebbd0; background: transparent; border: 0; border-radius: .45rem; font-size: .85rem; font-weight: 500; cursor: pointer; text-align: left; }
 .bl-nav-signout:hover { color: white; background: rgba(190,29,44,.3); }
+.bl-nav-signout:disabled { opacity: .72; cursor: wait; }
 .bl-app-main { flex: 1; min-width: 0; }
 .bl-app-content { width: min(100%, 78rem); margin-inline: auto; padding: 2rem 2.5rem 3.5rem; }
 

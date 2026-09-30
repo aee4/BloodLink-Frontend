@@ -9,13 +9,23 @@ public sealed class BearerHandler(SessionStore session, SessionRefreshService re
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var sentAccessToken = session.AccessToken;
+        var sentLogoutVersion = session.LogoutVersion;
         var body = request.Content is null ? null : await request.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (session.IsLogoutInProgress && !IsLogoutRequest(request))
+            return SuppressedResponse(request);
+
         if (!string.IsNullOrWhiteSpace(sentAccessToken))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sentAccessToken);
 
         var response = await base.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized && sentAccessToken is not null)
         {
+            if (session.IsLogoutInProgress || session.LogoutVersion != sentLogoutVersion)
+            {
+                response.Headers.TryAddWithoutValidation("X-BloodLink-Suppress-Session-Expired", "true");
+                return response;
+            }
+
             if (await refresh.RefreshAsync(sentAccessToken, cancellationToken))
             {
                 response.Dispose();
@@ -23,7 +33,10 @@ public sealed class BearerHandler(SessionStore session, SessionRefreshService re
                 return await base.SendAsync(retry, cancellationToken);
             }
 
-            NavigateToLogin();
+            if (session.IsLogoutInProgress || session.LogoutVersion != sentLogoutVersion)
+                response.Headers.TryAddWithoutValidation("X-BloodLink-Suppress-Session-Expired", "true");
+            else
+                NavigateToLogin();
         }
         return response;
     }
@@ -53,5 +66,15 @@ public sealed class BearerHandler(SessionStore session, SessionRefreshService re
         var current = "/" + navigation.ToBaseRelativePath(navigation.Uri);
         var returnUrl = ReturnPath.IsLocal(current) ? current : "/dashboard";
         navigation.NavigateTo($"/account/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+    }
+
+    private static bool IsLogoutRequest(HttpRequestMessage request) =>
+        request.RequestUri?.AbsolutePath.TrimEnd('/').EndsWith("/api/v1/auth/logout", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static HttpResponseMessage SuppressedResponse(HttpRequestMessage request)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.Unauthorized) { RequestMessage = request };
+        response.Headers.TryAddWithoutValidation("X-BloodLink-Suppress-Session-Expired", "true");
+        return response;
     }
 }
