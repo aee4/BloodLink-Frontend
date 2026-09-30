@@ -130,7 +130,7 @@
     }
     else if (Path == "/system/facilities" && Session.User?.Roles.Contains("SystemAdmin") == true)
     {
-        <section class="bl-toolbar"><label>Filter status<InputSelect @bind-Value="FacilityStatusFilter" @bind:after="Load"><option value="1">Active</option><option value="3">Suspended</option><option value="0">Legacy pending</option><option value="2">Rejected (legacy)</option></InputSelect></label></section>
+        <section class="bl-toolbar"><label>Filter status<InputSelect TValue="int?" Value="@FacilityStatusFilter" ValueChanged="ChangeFacilityStatusFilter" ValueExpression="@(() => FacilityStatusFilter)"><option value="">All</option><option value="1">Active</option><option value="3">Suspended</option><option value="0">Legacy pending</option><option value="2">Rejected (legacy)</option></InputSelect></label></section>
     }
     @if (Data is not null)
     {
@@ -216,9 +216,10 @@
     private string CancelButtonText { get; set; } = "Cancel";
     private Func<Task>? PendingConfirmation { get; set; }
     private bool Busy { get; set; } = true;
+    private long loadGeneration;
     private BloodType SelectedBloodType { get; set; } private UrgencyLevel SelectedUrgency { get; set; }
     private int UnitsChange { get; set; } private int MinimumAvailable { get; set; } = 1; private int NeedUnits { get; set; } = 1; private int RequestUnits { get; set; } = 1;
-    private int FacilityStatusFilter { get; set; } = (int)FacilityStatus.Approved; private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
+    private int? FacilityStatusFilter { get; set; } = (int)FacilityStatus.Approved; private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
     private string NeedIdText { get; set; } = ""; private string SourceFacilityText { get; set; } = ""; private DateTime NeededByLocal { get; set; } = DateTime.Now.AddHours(1); private bool DeadlineError { get; set; }
     private NeedDetailDto? RequestNeed { get; set; }
     private int? RequestSourceAvailable { get; set; }
@@ -269,11 +270,12 @@
 
     private async Task Load()
     {
+        var generation = Interlocked.Increment(ref loadGeneration);
         Busy = true; Message = null; ApiErrors = new Dictionary<string, string[]>(); Data = null; TimelineData = null; LowStockItems = []; RequestSourceAvailable = null; Rows = []; TimelineRows = []; RequestNeed = null; RequestSources = [];
         try
         {
             if (!CanAccessPath()) { Message = "Your account does not have permission to view this page."; Variant = "danger"; return; }
-            Data = Path switch
+            object? loadedData = Path switch
             {
                 "/dashboard" => await Dashboard.GetDashboard(),
                 "/facility/profile" => await Facilities.Mine(),
@@ -292,6 +294,8 @@
                 _ when Path.StartsWith("/requests/") && CurrentId is Guid id => await Requests.Get(id),
                 _ => null
             };
+            if (generation != Volatile.Read(ref loadGeneration)) return;
+            Data = loadedData;
             if (Data is not null) Rows = ToRows(Data);
             if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) LowStockItems = await Inventory.LowStock();
             if (Data is FacilityDto facility) { ProfileForm.Address = facility.Address; ProfileForm.ContactEmail = facility.ContactEmail; ProfileForm.ContactPhone = facility.ContactPhone; ProfileEditContext.NotifyValidationStateChanged(); }
@@ -317,8 +321,20 @@
             if (CurrentId is Guid record && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/needs/")) TimelineData = await Needs.Timeline(record);
             if (CurrentId is Guid requestId && Session.User?.Roles.Contains("FacilityAdmin") == true && Path.StartsWith("/requests/")) TimelineData = await Requests.Timeline(requestId);
         }
-        catch (ApiException ex) { Message = ex.Message; ApiErrors = ex.Fields; }
-        finally { Busy = false; }
+        catch (ApiException ex)
+        {
+            if (generation == Volatile.Read(ref loadGeneration)) { Message = ex.Message; ApiErrors = ex.Fields; }
+        }
+        finally
+        {
+            if (generation == Volatile.Read(ref loadGeneration)) Busy = false;
+        }
+    }
+    private async Task ChangeFacilityStatusFilter(int? status)
+    {
+        FacilityStatusFilter = status;
+        PageNumber = 1;
+        await Load();
     }
     private Task ClearDeadlineError() { DeadlineError = false; return Task.CompletedTask; }
     private async Task ChangePage(int page) { PageNumber = Math.Max(1, page); await Load(); }
