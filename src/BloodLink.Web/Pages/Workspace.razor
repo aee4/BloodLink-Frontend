@@ -65,18 +65,37 @@
     }
     else if (Path == "/account/change-password")
     {
-        <section class="bl-card bl-card-pad bl-form-surface"><p class="bl-eyebrow">Account security</p><h2 class="bl-card-title">Change password</h2><p class="bl-card-desc">Choose a new password to protect your BloodLink account.</p><form class="bl-form-grid" @onsubmit="ChangePassword" @onsubmit:preventDefault><label class="bl-field"><span class="bl-label">Current password</span><input class="bl-input" type="password" autocomplete="current-password" required @bind="CurrentPassword" /></label><label class="bl-field"><span class="bl-label">New password</span><input class="bl-input" type="password" autocomplete="new-password" minlength="12" required aria-describedby="new-password-hint" @bind="NewPassword" /></label><p id="new-password-hint" class="bl-fieldset-help">Use at least 12 characters and follow your facility password policy.</p><label class="bl-field"><span class="bl-label">Confirm new password</span><input class="bl-input" type="password" autocomplete="new-password" required @bind="ConfirmPassword" /></label><div class="bl-form-actions"><button class="bl-btn bl-btn-danger" disabled="@Busy">Change password</button></div></form></section>
+        <section class="bl-card bl-card-pad bl-form-surface"><p class="bl-eyebrow">Account security</p><h2 class="bl-card-title">Change password</h2><p class="bl-card-desc">Choose a new password to protect your BloodLink account.</p><EditForm id="change-password-form" class="bl-form-grid" EditContext="PasswordEditContext" OnValidSubmit="ChangePassword" OnInvalidSubmit="InvalidPasswordSubmit" novalidate><DataAnnotationsValidator />
+            @if (!string.IsNullOrWhiteSpace(Message)) { <div class="bl-validation-summary bl-field-full" role="alert">@Message</div> }
+            <label class="bl-field"><span class="bl-label">Current password</span><InputText id="current-password" class="bl-input" type="password" autocomplete="current-password" aria-describedby="current-password-error" aria-invalid="@(HasPasswordError(nameof(PasswordForm.CurrentPassword)) ? "true" : "false")" @bind-Value="PasswordForm.CurrentPassword" /><InlineValidationMessage TValue="string" For="() => PasswordForm.CurrentPassword" Id="current-password-error" /></label>
+            <label class="bl-field"><span class="bl-label">New password</span><PasswordInputText id="new-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="new-password-hint new-password-error" aria-invalid="@(HasPasswordError(nameof(PasswordForm.NewPassword)) ? "true" : "false")" @bind-Value="PasswordForm.NewPassword" /><InlineValidationMessage TValue="string" For="() => PasswordForm.NewPassword" Id="new-password-error" /></label>
+            <div id="new-password-hint" class="bl-fieldset-help bl-field-full"><p>Password must contain:</p><PasswordRequirements Password="@PasswordForm.NewPassword" /></div>
+            <label class="bl-field"><span class="bl-label">Confirm new password</span><InputText id="confirm-new-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="confirm-new-password-error" aria-invalid="@(HasPasswordError(nameof(PasswordForm.ConfirmPassword)) ? "true" : "false")" @bind-Value="PasswordForm.ConfirmPassword" /><InlineValidationMessage TValue="string" For="() => PasswordForm.ConfirmPassword" Id="confirm-new-password-error" /></label>
+            <div class="bl-form-actions bl-field-full"><button class="bl-btn bl-btn-danger" type="submit" disabled="@Busy">Change password</button></div></EditForm></section>
     }
     else if (Path == "/facility/profile")
     {
         @if (Data is FacilityDto facility)
         {
-            <section class="bl-panel"><dl><dt>Facility</dt><dd>@facility.Name</dd><dt>Status</dt><dd>@FacilityStatusLabel(facility.Status)</dd><dt>Registration</dt><dd>@facility.RegistrationNumber</dd></dl><form @onsubmit="UpdateFacility" @onsubmit:preventDefault><label>Address<input required @bind="Address" /></label><label>Contact email<input type="email" required @bind="ContactEmail" /></label><label>Contact phone<input required @bind="ContactPhone" /></label><button class="bl-button bl-button-primary">Save profile</button></form></section>
+            <section class="bl-panel"><dl><dt>Facility</dt><dd>@facility.Name</dd><dt>Status</dt><dd>@FacilityStatusLabel(facility.Status)</dd><dt>Registration</dt><dd>@facility.RegistrationNumber</dd></dl><EditForm id="facility-profile-form" class="bl-form-grid" EditContext="ProfileEditContext" OnValidSubmit="UpdateFacility" OnInvalidSubmit="InvalidProfileSubmit" novalidate><DataAnnotationsValidator />
+                @if (!string.IsNullOrWhiteSpace(Message)) { <div class="bl-validation-summary bl-field-full" role="alert">@Message</div> }
+                <label class="bl-field bl-field-full"><span class="bl-label">Address <span>*</span></span><InputText id="profile-address" class="bl-input" maxlength="500" aria-describedby="profile-address-error" aria-invalid="@(HasProfileError(nameof(ProfileForm.Address)) ? "true" : "false")" @bind-Value="ProfileForm.Address" /><InlineValidationMessage TValue="string" For="() => ProfileForm.Address" Id="profile-address-error" /></label>
+                <label class="bl-field"><span class="bl-label">Contact email <span>*</span></span><InputText id="profile-contact-email" class="bl-input" type="email" maxlength="256" aria-describedby="profile-contact-email-error" aria-invalid="@(HasProfileError(nameof(ProfileForm.ContactEmail)) ? "true" : "false")" @bind-Value="ProfileForm.ContactEmail" /><InlineValidationMessage TValue="string" For="() => ProfileForm.ContactEmail" Id="profile-contact-email-error" /></label>
+                <label class="bl-field"><span class="bl-label">Contact phone <span>*</span></span><InputText id="profile-contact-phone" class="bl-input" type="tel" maxlength="30" aria-describedby="profile-contact-phone-error" aria-invalid="@(HasProfileError(nameof(ProfileForm.ContactPhone)) ? "true" : "false")" @bind-Value="ProfileForm.ContactPhone" /><InlineValidationMessage TValue="string" For="() => ProfileForm.ContactPhone" Id="profile-contact-phone-error" /></label>
+                <div class="bl-form-actions bl-field-full"><button class="bl-button bl-button-primary" type="submit" disabled="@Busy">Save profile</button></div></EditForm></section>
         }
     }
     else if (Path == "/facility/staff/create")
     {
-        <section class="bl-panel"><form class="bl-form-grid" @onsubmit="CreateStaff" @onsubmit:preventDefault><label>First name<input required @bind="StaffFirst" /></label><label>Last name<input required @bind="StaffLast" /></label><label>Email<input required type="email" @bind="StaffEmail" /></label><label>Phone<input type="tel" @bind="StaffPhone" /></label><label>Temporary password<input required type="password" autocomplete="new-password" minlength="12" aria-describedby="staff-pass-note" @bind="StaffPassword" /></label><p id="staff-pass-note">Share credentials securely. Password-reset delivery is unavailable.</p><button class="bl-button bl-button-primary" disabled="@Busy">Create staff account</button></form></section>
+        <section class="bl-panel"><EditForm id="staff-creation-form" class="bl-form-grid" EditContext="StaffEditContext" OnValidSubmit="CreateStaff" OnInvalidSubmit="InvalidStaffSubmit" novalidate><DataAnnotationsValidator />
+            @if (!string.IsNullOrWhiteSpace(Message)) { <div class="bl-validation-summary bl-field-full" role="alert">@Message</div> }
+            <label class="bl-field"><span class="bl-label">First name <span>*</span></span><InputText id="staff-first-name" class="bl-input" maxlength="100" aria-describedby="staff-first-name-error" aria-invalid="@(HasStaffError(nameof(StaffForm.FirstName)) ? "true" : "false")" @bind-Value="StaffForm.FirstName" /><InlineValidationMessage TValue="string" For="() => StaffForm.FirstName" Id="staff-first-name-error" /></label>
+            <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><InputText id="staff-last-name" class="bl-input" maxlength="100" aria-describedby="staff-last-name-error" aria-invalid="@(HasStaffError(nameof(StaffForm.LastName)) ? "true" : "false")" @bind-Value="StaffForm.LastName" /><InlineValidationMessage TValue="string" For="() => StaffForm.LastName" Id="staff-last-name-error" /></label>
+            <label class="bl-field"><span class="bl-label">Email <span>*</span></span><InputText id="staff-email" class="bl-input" type="email" maxlength="256" aria-describedby="staff-email-error" aria-invalid="@(HasStaffError(nameof(StaffForm.Email)) ? "true" : "false")" @bind-Value="StaffForm.Email" /><InlineValidationMessage TValue="string" For="() => StaffForm.Email" Id="staff-email-error" /></label>
+            <label class="bl-field"><span class="bl-label">Phone</span><InputText id="staff-phone" class="bl-input" type="tel" maxlength="30" aria-describedby="staff-phone-error" aria-invalid="@(HasStaffError(nameof(StaffForm.PhoneNumber)) ? "true" : "false")" @bind-Value="StaffForm.PhoneNumber" /><InlineValidationMessage TValue="string" For="() => StaffForm.PhoneNumber" Id="staff-phone-error" /></label>
+            <label class="bl-field"><span class="bl-label">Temporary password <span>*</span></span><PasswordInputText id="staff-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="staff-pass-note staff-password-error" aria-invalid="@(HasStaffError(nameof(StaffForm.Password)) ? "true" : "false")" @bind-Value="StaffForm.Password" /><InlineValidationMessage TValue="string" For="() => StaffForm.Password" Id="staff-password-error" /></label>
+            <div id="staff-pass-note" class="bl-fieldset-help"><p>Password must contain:</p><PasswordRequirements Password="@StaffForm.Password" /><p>Share credentials securely. Password-reset delivery is unavailable.</p></div>
+            <button class="bl-button bl-button-primary bl-field-full" type="submit" disabled="@Busy">Create staff account</button></EditForm></section>
     }
     else if (Path == "/inventory/adjust")
     {
@@ -182,12 +201,18 @@
     private string? Message { get; set; }
     private string Variant { get; set; } = "danger";
     private IReadOnlyDictionary<string, string[]> ApiErrors { get; set; } = new Dictionary<string, string[]>();
+    private readonly StaffCreationForm StaffForm = new();
+    private readonly ChangePasswordForm PasswordForm = new();
+    private readonly FacilityProfileForm ProfileForm = new();
+    private EditContext StaffEditContext { get; set; } = default!;
+    private EditContext PasswordEditContext { get; set; } = default!;
+    private EditContext ProfileEditContext { get; set; } = default!;
+    private ValidationMessageStore StaffServerMessages { get; set; } = default!;
+    private ValidationMessageStore PasswordServerMessages { get; set; } = default!;
+    private ValidationMessageStore ProfileServerMessages { get; set; } = default!;
     private string? ConfirmText { get; set; }
     private Func<Task>? PendingConfirmation { get; set; }
     private bool Busy { get; set; } = true;
-    private string Address { get; set; } = ""; private string ContactEmail { get; set; } = ""; private string ContactPhone { get; set; } = "";
-    private string CurrentPassword { get; set; } = ""; private string NewPassword { get; set; } = ""; private string ConfirmPassword { get; set; } = "";
-    private string StaffFirst { get; set; } = ""; private string StaffLast { get; set; } = ""; private string StaffEmail { get; set; } = ""; private string StaffPhone { get; set; } = ""; private string StaffPassword { get; set; } = "";
     private BloodType SelectedBloodType { get; set; } private UrgencyLevel SelectedUrgency { get; set; }
     private int UnitsChange { get; set; } private int MinimumAvailable { get; set; } = 1; private int NeedUnits { get; set; } = 1; private int RequestUnits { get; set; } = 1; private int AcceptedUnits { get; set; } = 1;
     private int FacilityStatusFilter { get; set; } = (int)FacilityStatus.Approved; private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
@@ -198,6 +223,21 @@
 
     private string? loadedRouteKey;
     private string RouteKey => Path + new Uri(Navigation.Uri).Query;
+
+    protected override void OnInitialized()
+    {
+        StaffEditContext = new EditContext(StaffForm);
+        StaffServerMessages = new ValidationMessageStore(StaffEditContext);
+        StaffEditContext.OnFieldChanged += (_, args) => FormValidation.ClearServerError(StaffEditContext, StaffServerMessages, args);
+
+        PasswordEditContext = new EditContext(PasswordForm);
+        PasswordServerMessages = new ValidationMessageStore(PasswordEditContext);
+        PasswordEditContext.OnFieldChanged += (_, args) => FormValidation.ClearServerError(PasswordEditContext, PasswordServerMessages, args);
+
+        ProfileEditContext = new EditContext(ProfileForm);
+        ProfileServerMessages = new ValidationMessageStore(ProfileEditContext);
+        ProfileEditContext.OnFieldChanged += (_, args) => FormValidation.ClearServerError(ProfileEditContext, ProfileServerMessages, args);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -251,7 +291,7 @@
             };
             if (Data is not null) Rows = ToRows(Data);
             if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) LowStockItems = await Inventory.LowStock();
-            if (Data is FacilityDto facility) { Address = facility.Address; ContactEmail = facility.ContactEmail; ContactPhone = facility.ContactPhone; }
+            if (Data is FacilityDto facility) { ProfileForm.Address = facility.Address; ProfileForm.ContactEmail = facility.ContactEmail; ProfileForm.ContactPhone = facility.ContactPhone; ProfileEditContext.NotifyValidationStateChanged(); }
             if (Data is RequestDto currentRequest)
             {
                 try
@@ -289,9 +329,88 @@
         DeadlineError = false;
         await Run(async () => { var created = await Needs.Create(new(SelectedBloodType, NeedUnits, SelectedUrgency, DateTime.Parse(utc, null, System.Globalization.DateTimeStyles.RoundtripKind), Note)); Navigation.NavigateTo($"/needs/{created.Id}"); }, "Need submitted.");
     }
-    private Task UpdateFacility() => Run(() => Facilities.Update(new(Address, ContactEmail, ContactPhone)), "Facility profile saved.");
-    private Task ChangePassword() => string.IsNullOrWhiteSpace(NewPassword) || NewPassword != ConfirmPassword ? SetMessage("New passwords do not match.") : Run(async () => { await Auth.ChangePassword(CurrentPassword, NewPassword); CurrentPassword = NewPassword = ConfirmPassword = ""; Navigation.NavigateTo("/account/login?signedOut=true", true); }, "Password changed. Sign in again.");
-    private Task CreateStaff() => Run(async () => { await Staff.Create(new(StaffFirst, StaffLast, StaffEmail, StaffPhone, StaffPassword)); StaffPassword = ""; Navigation.NavigateTo("/facility/staff"); }, "Staff account created.");
+    private async Task UpdateFacility()
+    {
+        if (Busy) return;
+        Busy = true;
+        Message = null;
+        ProfileServerMessages.Clear();
+        try
+        {
+            await Facilities.Update(new(ProfileForm.Address, ProfileForm.ContactEmail, ProfileForm.ContactPhone));
+            await Load();
+            Variant = "success";
+            Message = "Facility profile saved.";
+        }
+        catch (ApiException ex)
+        {
+            var mapped = FormValidation.ApplyServerErrors(ProfileEditContext, ProfileServerMessages, ex.Fields);
+            Message = mapped ? "Review the marked fields and correct their values." : ex.Message;
+            if (mapped) await FocusFirstInvalid("facility-profile-form");
+        }
+        finally { Busy = false; }
+    }
+
+    private Task InvalidProfileSubmit(EditContext _) { Message = "Correct the highlighted fields before submitting."; return FocusFirstInvalid("facility-profile-form"); }
+    private async Task ChangePassword()
+    {
+        if (Busy) return;
+        Busy = true;
+        Message = null;
+        PasswordServerMessages.Clear();
+        try
+        {
+            await Auth.ChangePassword(PasswordForm.CurrentPassword, PasswordForm.NewPassword);
+            PasswordForm.CurrentPassword = PasswordForm.NewPassword = PasswordForm.ConfirmPassword = "";
+            Navigation.NavigateTo("/account/login?signedOut=true", true);
+        }
+        catch (ApiException ex)
+        {
+            var mapped = FormValidation.ApplyServerErrors(PasswordEditContext, PasswordServerMessages, ex.Fields);
+            Message = mapped ? "Review the marked fields and correct their values." : ex.Message;
+            if (mapped) await FocusFirstInvalid("change-password-form");
+        }
+        finally { Busy = false; }
+    }
+
+    private async Task CreateStaff()
+    {
+        if (Busy) return;
+        Busy = true;
+        Message = null;
+        ApiErrors = new Dictionary<string, string[]>();
+        StaffServerMessages.Clear();
+        try
+        {
+            await Staff.Create(new(StaffForm.FirstName, StaffForm.LastName, StaffForm.Email, StaffForm.PhoneNumber, StaffForm.Password));
+            StaffForm.Password = "";
+            Navigation.NavigateTo("/facility/staff");
+        }
+        catch (ApiException ex)
+        {
+            var mapped = FormValidation.ApplyServerErrors(StaffEditContext, StaffServerMessages, ex.Fields);
+            Message = mapped ? "Review the marked fields and correct their values." : ex.Message;
+            if (mapped) await FocusFirstInvalid("staff-creation-form");
+        }
+        finally { Busy = false; }
+    }
+
+    private Task InvalidStaffSubmit(EditContext _)
+    {
+        Message = "Correct the highlighted fields before submitting.";
+        return FocusFirstInvalid("staff-creation-form");
+    }
+
+    private Task InvalidPasswordSubmit(EditContext _)
+    {
+        Message = "Correct the highlighted fields before submitting.";
+        return FocusFirstInvalid("change-password-form");
+    }
+
+    private bool HasStaffError(string field) => StaffEditContext?.GetValidationMessages(new FieldIdentifier(StaffForm, field)).Any() == true;
+    private bool HasPasswordError(string field) => PasswordEditContext?.GetValidationMessages(new FieldIdentifier(PasswordForm, field)).Any() == true;
+    private bool HasProfileError(string field) => ProfileEditContext?.GetValidationMessages(new FieldIdentifier(ProfileForm, field)).Any() == true;
+    private Task FocusFirstInvalid(string formId) => JS.InvokeVoidAsync("bloodLinkValidation.focusFirstInvalid", formId).AsTask();
     private Task AdjustInventory() => Run(() => Inventory.Adjust(new(SelectedBloodType, UnitsChange, Reason, null)), "Inventory adjustment saved.");
     private async Task SearchInventory() { try { Data = await Inventory.Search(SelectedBloodType, MinimumAvailable); Rows = ToRows(Data); } catch (ApiException ex) { Message = ex.Message; } }
     private Task CreateRequest() => Guid.TryParse(NeedIdText, out var needId) && Guid.TryParse(SourceFacilityText, out var facilityId) ? Run(async () => { var created = await Requests.Create(new(needId, facilityId, RequestUnits, RequestNoteText)); Navigation.NavigateTo($"/requests/{created.Id}"); }, "Request sent.") : SetMessage("Enter valid need and source facility IDs.");

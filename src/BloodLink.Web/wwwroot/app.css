@@ -171,6 +171,12 @@ h1:focus { outline: none; }
 .bl-input.valid.modified { border-color: #168253; }
 .bl-validation-summary { margin-bottom: 1.25rem; padding: .8rem 1rem; color: #8d1824; background: #fff2f3; border: 1px solid rgba(190,29,44,.16); border-radius: .45rem; font-size: .78rem; }
 .bl-validation-summary ul { margin: .35rem 0 0; padding-left: 1.15rem; }
+.bl-field-validation { margin: .3rem 0 0; padding-left: 1rem; color: #7d1723; font-size: .76rem; line-height: 1.45; }
+.bl-field-validation li + li { margin-top: .15rem; }
+.bl-password-checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem .8rem; margin: .35rem 0 0; padding: 0; list-style: none; color: var(--bl-muted); }
+.bl-password-checklist li { display: flex; gap: .4rem; align-items: baseline; }
+.bl-password-checklist li > span { min-width: 1em; font-weight: 700; }
+.bl-password-checklist li.met { color: #116b46; }
 .bl-form-actions { display: flex; justify-content: flex-end; gap: .65rem; margin-top: 1.5rem; }
 
 .bl-alert { display: flex; align-items: flex-start; gap: .65rem; margin-top: 1rem; padding: .75rem .85rem; border: 1px solid; border-radius: .45rem; font-size: .76rem; line-height: 1.55; }

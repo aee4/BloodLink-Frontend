@@ -49,29 +49,71 @@ public abstract class BackendApiClient(HttpClient http)
     private static async Task<ApiException> CreateException(HttpResponseMessage response, string? requestPath, CancellationToken cancellationToken)
     {
         IReadOnlyDictionary<string, string[]> fields = new Dictionary<string, string[]>();
-        if (response.StatusCode == HttpStatusCode.BadRequest)
+        string? code = null;
+        if (response.Content.Headers.ContentLength != 0)
         {
             try
             {
                 using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-                if (document.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
-                    fields = errors.EnumerateObject().ToDictionary(property => property.Name, _ => new[] { "Check this field." });
+                var root = document.RootElement;
+                if (TryGetProperty(root, "errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+                    fields = errors.EnumerateObject().Where(property => HasMessages(property.Value))
+                        .ToDictionary(property => property.Name, _ => new[] { "Check this field." });
+                if (TryGetProperty(root, "code", out var codeElement) && codeElement.ValueKind == JsonValueKind.String)
+                    code = codeElement.GetString();
             }
             catch (JsonException) { }
         }
 
         var message = response.StatusCode switch
         {
-            HttpStatusCode.BadRequest => "Check the entered values and try again.",
+            HttpStatusCode.BadRequest when fields.Count > 0 => "Some details need correction. Review the messages beside the marked fields.",
+            HttpStatusCode.BadRequest when code == "validation_error" => "One or more details do not meet the required format or password policy. Review the form and try again.",
+            HttpStatusCode.BadRequest => "The submitted details could not be accepted. Review the form and try again.",
             HttpStatusCode.Unauthorized when IsLoginRequest(requestPath) => "Unable to sign in with these credentials.",
             HttpStatusCode.Unauthorized => "Your session has expired. Sign in again.",
             HttpStatusCode.Forbidden => "Your account does not have permission to do that.",
             HttpStatusCode.NotFound => "This record is unavailable or no longer exists.",
+            HttpStatusCode.Conflict when IsFacilityRegistration(requestPath) => "The facility name or registration number may already be in use, or the administrator email may belong to an existing account. Check those details.",
+            HttpStatusCode.Conflict when IsStaffCreation(requestPath) => "An account with this email already exists. Use a different email address.",
             HttpStatusCode.Conflict => "This request conflicts with the current record or state. Check its current status and try again.",
             HttpStatusCode.TooManyRequests => "Too many requests. Wait a moment and try again.",
             _ => "BloodLink could not complete that request. Please try again later."
         };
         return new ApiException(response.StatusCode, message, fields);
+    }
+
+    private static bool HasMessages(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.Array => value.EnumerateArray().Any(item => item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString())),
+        JsonValueKind.String => !string.IsNullOrWhiteSpace(value.GetString()),
+        _ => false
+    };
+
+    private static bool TryGetProperty(JsonElement value, string name, out JsonElement property)
+    {
+        foreach (var item in value.EnumerateObject())
+        {
+            if (string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                property = item.Value;
+                return true;
+            }
+        }
+
+        property = default;
+        return false;
+    }
+
+    private static bool IsFacilityRegistration(string? requestPath) => IsPath(requestPath, "api/v1/facilities/register");
+    private static bool IsStaffCreation(string? requestPath) => IsPath(requestPath, "api/v1/staff");
+
+    private static bool IsPath(string? requestPath, string expectedPath)
+    {
+        var path = Uri.TryCreate(requestPath, UriKind.Absolute, out var absoluteUri)
+            ? absoluteUri.AbsolutePath
+            : requestPath;
+        return string.Equals(path?.TrimStart('/'), expectedPath, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsLoginRequest(string? requestPath)

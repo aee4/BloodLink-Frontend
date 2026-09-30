@@ -2,6 +2,7 @@
 @page "/facilities/register"
 @attribute [AllowAnonymous]
 @inject FacilityApiClient Facilities
+@inject IJSRuntime JS
 
 <PageTitle>Register your facility | BloodLink</PageTitle>
 <main class="bl-form-page">
@@ -25,65 +26,82 @@
                     <p>Join the BloodLink network and create your facility workspace.</p>
                 </div>
                 <Feedback Message="@Message" />
-                <form class="bl-form-grid" @onsubmit="Submit" @onsubmit:preventDefault>
+                <EditForm id="facility-registration-form" class="bl-form-grid" EditContext="EditContext" OnValidSubmit="Submit" OnInvalidSubmit="InvalidSubmit" novalidate>
+                    <DataAnnotationsValidator />
+                    @if (!string.IsNullOrWhiteSpace(Message))
+                    { <div class="bl-validation-summary bl-field-full" role="alert">@Message</div> }
                     <fieldset class="bl-fieldset bl-field-full">
                         <legend>Facility details</legend>
                         <div class="bl-form-grid">
-                            <label class="bl-field"><span class="bl-label">Facility name <span>*</span></span><input class="bl-input" required maxlength="200" @bind="Form.Name" /></label>
-                            <label class="bl-field"><span class="bl-label">Facility type <span>*</span></span><InputSelect class="bl-input bl-select" @bind-Value="Form.FacilityType"><option value="Hospital">Hospital</option><option value="BloodBank">Blood bank</option></InputSelect></label>
-                            <label class="bl-field"><span class="bl-label">Registration number <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.RegistrationNumber" /></label>
-                            <label class="bl-field"><span class="bl-label">Region <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.Region" /></label>
-                            <label class="bl-field"><span class="bl-label">City <span>*</span></span><input class="bl-input" required maxlength="100" @bind="Form.City" /></label>
-                            <label class="bl-field bl-field-full"><span class="bl-label">Address <span>*</span></span><input class="bl-input" required maxlength="500" @bind="Form.Address" /></label>
-                            <label class="bl-field"><span class="bl-label">Facility contact email <span>*</span></span><input class="bl-input" type="email" required @bind="Form.ContactEmail" /></label>
-                            <label class="bl-field"><span class="bl-label">Facility contact phone <span>*</span></span><input class="bl-input" type="tel" required @bind="Form.ContactPhone" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility name <span>*</span></span><InputText id="facility-name" class="bl-input" maxlength="200" aria-describedby="facility-name-error" aria-invalid="@(HasError(nameof(Form.Name)) ? "true" : "false")" @bind-Value="Form.Name" /><InlineValidationMessage TValue="string" For="() => Form.Name" Id="facility-name-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility type <span>*</span></span><InputSelect id="facility-type" class="bl-input bl-select" aria-describedby="facility-type-error" aria-invalid="@(HasError(nameof(Form.FacilityType)) ? "true" : "false")" @bind-Value="Form.FacilityType"><option value="">Select facility type</option><option value="Hospital">Hospital</option><option value="BloodBank">Blood bank</option></InputSelect><InlineValidationMessage TValue="FacilityType?" For="() => Form.FacilityType" Id="facility-type-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Registration number <span>*</span></span><InputText id="facility-registration-number" class="bl-input" maxlength="100" aria-describedby="facility-registration-number-error" aria-invalid="@(HasError(nameof(Form.RegistrationNumber)) ? "true" : "false")" @bind-Value="Form.RegistrationNumber" /><InlineValidationMessage TValue="string" For="() => Form.RegistrationNumber" Id="facility-registration-number-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Region <span>*</span></span><InputText id="facility-region" class="bl-input" maxlength="100" aria-describedby="facility-region-error" aria-invalid="@(HasError(nameof(Form.Region)) ? "true" : "false")" @bind-Value="Form.Region" /><InlineValidationMessage TValue="string" For="() => Form.Region" Id="facility-region-error" /></label>
+                            <label class="bl-field"><span class="bl-label">City <span>*</span></span><InputText id="facility-city" class="bl-input" maxlength="100" aria-describedby="facility-city-error" aria-invalid="@(HasError(nameof(Form.City)) ? "true" : "false")" @bind-Value="Form.City" /><InlineValidationMessage TValue="string" For="() => Form.City" Id="facility-city-error" /></label>
+                            <label class="bl-field bl-field-full"><span class="bl-label">Address <span>*</span></span><InputText id="facility-address" class="bl-input" maxlength="500" aria-describedby="facility-address-error" aria-invalid="@(HasError(nameof(Form.Address)) ? "true" : "false")" @bind-Value="Form.Address" /><InlineValidationMessage TValue="string" For="() => Form.Address" Id="facility-address-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility contact email <span>*</span></span><InputText id="facility-contact-email" class="bl-input" type="email" maxlength="256" aria-describedby="facility-contact-email-error" aria-invalid="@(HasError(nameof(Form.ContactEmail)) ? "true" : "false")" @bind-Value="Form.ContactEmail" /><InlineValidationMessage TValue="string" For="() => Form.ContactEmail" Id="facility-contact-email-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Facility contact phone <span>*</span></span><InputText id="facility-contact-phone" class="bl-input" type="tel" maxlength="30" aria-describedby="facility-contact-phone-error" aria-invalid="@(HasError(nameof(Form.ContactPhone)) ? "true" : "false")" @bind-Value="Form.ContactPhone" /><InlineValidationMessage TValue="string" For="() => Form.ContactPhone" Id="facility-contact-phone-error" /></label>
                         </div>
                     </fieldset>
                     <fieldset class="bl-fieldset bl-field-full">
                         <legend>Facility administrator</legend>
                         <p class="bl-fieldset-help">This account will manage the facility workspace.</p>
                         <div class="bl-form-grid">
-                            <label class="bl-field"><span class="bl-label">First name <span>*</span></span><input class="bl-input" required @bind="Form.AdminFirstName" /></label>
-                            <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><input class="bl-input" required @bind="Form.AdminLastName" /></label>
-                            <label class="bl-field"><span class="bl-label">Administrator email <span>*</span></span><input class="bl-input" type="email" required @bind="Form.AdminEmail" /></label>
-                            <label class="bl-field"><span class="bl-label">Administrator phone <span>*</span></span><input class="bl-input" type="tel" required @bind="Form.AdminPhoneNumber" /></label>
-                            <label class="bl-field bl-field-full"><span class="bl-label">Password <span>*</span></span><input class="bl-input" type="password" required autocomplete="new-password" minlength="12" @bind="Form.AdminPassword" aria-describedby="password-requirements" /></label>
-                            <p id="password-requirements" class="bl-fieldset-help">Use at least 12 characters and follow the password policy shown by your administrator.</p>
+                            <label class="bl-field"><span class="bl-label">First name <span>*</span></span><InputText id="admin-first-name" class="bl-input" maxlength="100" aria-describedby="admin-first-name-error" aria-invalid="@(HasError(nameof(Form.AdminFirstName)) ? "true" : "false")" @bind-Value="Form.AdminFirstName" /><InlineValidationMessage TValue="string" For="() => Form.AdminFirstName" Id="admin-first-name-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><InputText id="admin-last-name" class="bl-input" maxlength="100" aria-describedby="admin-last-name-error" aria-invalid="@(HasError(nameof(Form.AdminLastName)) ? "true" : "false")" @bind-Value="Form.AdminLastName" /><InlineValidationMessage TValue="string" For="() => Form.AdminLastName" Id="admin-last-name-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Administrator email <span>*</span></span><InputText id="admin-email" class="bl-input" type="email" maxlength="256" aria-describedby="admin-email-error" aria-invalid="@(HasError(nameof(Form.AdminEmail)) ? "true" : "false")" @bind-Value="Form.AdminEmail" /><InlineValidationMessage TValue="string" For="() => Form.AdminEmail" Id="admin-email-error" /></label>
+                            <label class="bl-field"><span class="bl-label">Administrator phone <span>*</span></span><InputText id="admin-phone" class="bl-input" type="tel" maxlength="30" aria-describedby="admin-phone-error" aria-invalid="@(HasError(nameof(Form.AdminPhoneNumber)) ? "true" : "false")" @bind-Value="Form.AdminPhoneNumber" /><InlineValidationMessage TValue="string" For="() => Form.AdminPhoneNumber" Id="admin-phone-error" /></label>
+                            <label class="bl-field bl-field-full"><span class="bl-label">Password <span>*</span></span><PasswordInputText id="admin-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="password-requirements admin-password-error" aria-invalid="@(HasError(nameof(Form.AdminPassword)) ? "true" : "false")" @bind-Value="Form.AdminPassword" /><InlineValidationMessage TValue="string" For="() => Form.AdminPassword" Id="admin-password-error" /></label>
+                            <div id="password-requirements" class="bl-fieldset-help"><p>Password must contain:</p><PasswordRequirements Password="@Form.AdminPassword" /></div>
                         </div>
                     </fieldset>
                     <div class="bl-form-actions"><button class="bl-btn bl-btn-danger bl-btn-lg" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button></div>
-                </form>
+                </EditForm>
             }
         </section>
     </div>
 </main>
 
 @code {
-    private RegistrationForm Form { get; set; } = new();
+    private FacilityRegistrationForm Form { get; set; } = new();
+    private EditContext EditContext { get; set; } = default!;
+    private ValidationMessageStore ServerMessages { get; set; } = default!;
     private FacilityDto? Submitted { get; set; }
     private string? Message { get; set; }
     private bool Busy { get; set; }
+
+    protected override void OnInitialized()
+    {
+        EditContext = new EditContext(Form);
+        ServerMessages = new ValidationMessageStore(EditContext);
+    }
 
     private async Task Submit()
     {
         if (Busy) return;
         Busy = true;
         Message = null;
+        ServerMessages.Clear();
         try
         {
-            Submitted = await Facilities.Register(new(Form.Name, Form.FacilityType, Form.RegistrationNumber, Form.Region, Form.City, Form.Address, Form.ContactEmail, Form.ContactPhone, Form.AdminFirstName, Form.AdminLastName, Form.AdminEmail, Form.AdminPhoneNumber, Form.AdminPassword));
+            Submitted = await Facilities.Register(new(Form.Name, Form.FacilityType!.Value, Form.RegistrationNumber, Form.Region, Form.City, Form.Address, Form.ContactEmail, Form.ContactPhone, Form.AdminFirstName, Form.AdminLastName, Form.AdminEmail, Form.AdminPhoneNumber, Form.AdminPassword));
             Form.AdminPassword = "";
         }
-        catch (ApiException ex) { Message = ex.Message; }
+        catch (ApiException ex)
+        {
+            var mapped = FormValidation.ApplyServerErrors(EditContext, ServerMessages, ex.Fields);
+            Message = ex.StatusCode == System.Net.HttpStatusCode.Conflict || !mapped ? ex.Message : "Review the marked fields and correct their values.";
+            if (mapped) await FocusFirstInvalid();
+        }
         finally { Busy = false; }
     }
 
-    private sealed class RegistrationForm
+    private Task InvalidSubmit(EditContext _)
     {
-        public string Name { get; set; } = ""; public FacilityType FacilityType { get; set; } public string RegistrationNumber { get; set; } = "";
-        public string Region { get; set; } = ""; public string City { get; set; } = ""; public string Address { get; set; } = "";
-        public string ContactEmail { get; set; } = ""; public string ContactPhone { get; set; } = ""; public string AdminFirstName { get; set; } = "";
-        public string AdminLastName { get; set; } = ""; public string AdminEmail { get; set; } = ""; public string AdminPhoneNumber { get; set; } = "";
-        public string AdminPassword { get; set; } = "";
+        Message = "Correct the highlighted fields before submitting.";
+        return FocusFirstInvalid();
     }
+
+    private bool HasError(string field) => EditContext?.GetValidationMessages(new FieldIdentifier(Form, field)).Any() == true;
+    private Task FocusFirstInvalid() => JS.InvokeVoidAsync("bloodLinkValidation.focusFirstInvalid", "facility-registration-form").AsTask();
 }

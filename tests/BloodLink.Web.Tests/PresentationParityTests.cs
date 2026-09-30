@@ -131,7 +131,8 @@ public sealed class PresentationParityTests
         var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
         var css = Read("src/BloodLink.Web/wwwroot/app.css");
 
-        Assert.Contains("<InputSelect class=\"bl-input bl-select\" @bind-Value=\"Form.FacilityType\">", registration, StringComparison.Ordinal);
+        Assert.Contains("class=\"bl-input bl-select\" aria-describedby=\"facility-type-error\"", registration, StringComparison.Ordinal);
+        Assert.Contains("@bind-Value=\"Form.FacilityType\"", registration, StringComparison.Ordinal);
         Assert.Contains("<option value=\"Hospital\">Hospital</option>", registration, StringComparison.Ordinal);
         Assert.Contains("<option value=\"BloodBank\">Blood bank</option>", registration, StringComparison.Ordinal);
         Assert.Contains("if (Busy) return;", registration, StringComparison.Ordinal);
