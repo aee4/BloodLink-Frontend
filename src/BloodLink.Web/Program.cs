@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using BloodLink.Web;
 using BloodLink.Web.Services.Api;
 using BloodLink.Web.Services.Authentication;
+using BloodLink.Web.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -35,6 +36,9 @@ builder.Services.AddScoped<InventoryApiClient>();
 builder.Services.AddScoped<NeedApiClient>();
 builder.Services.AddScoped<RequestApiClient>();
 builder.Services.AddScoped<NotificationApiClient>();
+builder.Services.AddScoped(sp => new NotificationToastService(
+    sp.GetRequiredService<SessionStore>(),
+    sp.GetRequiredService<NotificationApiClient>()));
 builder.Services.AddScoped<DashboardApiClient>();
 
 await builder.Build().RunAsync();

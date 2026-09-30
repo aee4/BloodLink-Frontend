@@ -1,0 +1,73 @@
+@implements IDisposable
+@inject NotificationToastService Toasts
+@inject NavigationManager Navigation
+
+<section class="bl-toast-region" aria-label="New notifications" aria-live="polite" aria-relevant="additions text" aria-atomic="false">
+    @foreach (var toast in Toasts.Visible)
+    {
+        <article @key="toast.Id" class="bl-toast bl-toast-@toast.Severity.ToString().ToLowerInvariant()"
+                 role="status" @onmouseenter="() => Toasts.SetHovered(toast.Id, true)" @onmouseleave="() => Toasts.SetHovered(toast.Id, false)"
+                 @onfocusin="() => HandleFocusIn(toast.Id)" @onfocusout="() => HandleFocusOut(toast.Id)">
+            <div class="bl-toast-icon" aria-hidden="true">@Icon(toast.Severity)</div>
+            <div class="bl-toast-content">
+                <p class="bl-toast-severity">@SeverityLabel(toast.Severity)</p>
+                <h2>@toast.Title</h2>
+                <p>@toast.Message</p>
+                @if (!string.IsNullOrWhiteSpace(toast.TargetPath) && !string.IsNullOrWhiteSpace(toast.ActionLabel))
+                {
+                    <button type="button" class="bl-toast-action" @onclick="() => Toasts.Navigate(toast, Navigation)">@toast.ActionLabel</button>
+                }
+            </div>
+            <button type="button" class="bl-toast-dismiss" aria-label="Dismiss notification" @onclick="() => Toasts.Dismiss(toast.Id)">x</button>
+        </article>
+    }
+</section>
+
+@code {
+    private readonly Dictionary<Guid, int> focusVersions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Toasts.Changed += OnChanged;
+        await Toasts.StartAsync();
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void HandleFocusIn(Guid id)
+    {
+        focusVersions[id] = focusVersions.GetValueOrDefault(id) + 1;
+        Toasts.SetFocused(id, true);
+    }
+
+    private async Task HandleFocusOut(Guid id)
+    {
+        var version = focusVersions.GetValueOrDefault(id) + 1;
+        focusVersions[id] = version;
+        await Task.Delay(75);
+        if (focusVersions.GetValueOrDefault(id) == version)
+            Toasts.SetFocused(id, false);
+    }
+
+    private static string SeverityLabel(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Success => "Success",
+        ToastSeverity.Warning => "Warning",
+        ToastSeverity.Error => "Important alert",
+        _ => "Information"
+    };
+
+    private static string Icon(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Success => "+",
+        ToastSeverity.Warning => "!",
+        ToastSeverity.Error => "!",
+        _ => "i"
+    };
+
+    public void Dispose()
+    {
+        Toasts.Changed -= OnChanged;
+        Toasts.Stop();
+    }
+}
