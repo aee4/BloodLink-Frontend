@@ -4,29 +4,12 @@
 @if (IsSystemAdmin)
 {
     <div class="bl-stat-grid bl-stat-grid-4">
-        <DashboardStatCard Label="Pending facilities" Value="@Value("pendingFacilities")" Icon="building" Accent="true" />
-        <DashboardStatCard Label="Approved facilities" Value="@Value("approvedFacilities")" Icon="building" />
+        <DashboardStatCard Label="Active facilities" Value="@Value("activeFacilities")" Icon="building" Accent="true" />
         <DashboardStatCard Label="Suspended facilities" Value="@Value("suspendedFacilities")" Icon="shield" />
+        <DashboardStatCard Label="Total facilities" Value="@Value("totalFacilities")" Icon="building" />
         <DashboardStatCard Label="Active requests" Value="@Value("activeRequests")" Icon="inbox" />
     </div>
-    <div class="bl-card-grid bl-card-grid-2">
-        <section class="bl-card">
-            <div class="bl-card-head"><h2>Facilities awaiting review</h2><a class="bl-link" href="/system/facilities">View facilities</a></div>
-            @if (Items("pendingReviews").Count == 0) { <DashboardEmptyState Title="No pending reviews" Description="New facility registrations will appear here." /> }
-            else
-            {
-                <div class="bl-list">
-                    @foreach (var item in Items("pendingReviews"))
-                    {
-                        <a class="bl-dash-row" href="@($"/system/facilities/{Text(item, "id")}")">
-                            <span class="bl-fac-avatar" aria-hidden="true">@Initial(Text(item, "name"))</span>
-                            <span class="bl-dash-row-main"><strong>@Text(item, "name")</strong><small>@Text(item, "city"), @Text(item, "region")</small></span>
-                            <AppIcon Name="chevron-right" Size="16" />
-                        </a>
-                    }
-                </div>
-            }
-        </section>
+    <div class="bl-card-grid">
         <DashboardActivityCard Items="@Items("recentActivity")" />
     </div>
 }

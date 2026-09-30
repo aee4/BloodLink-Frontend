@@ -12,11 +12,8 @@
             {
                 <div class="bl-success-card">
                     <span class="bl-success-icon"><AppIcon Name="circle-check" Size="25" /></span>
-                    <h1 id="register-title">Registration received</h1>
-                    @if (Submitted.Status == FacilityStatus.Approved)
-                    { <p>This facility is approved and ready to use. Sign in with the administrator account you created.</p> }
-                    else
-                    { <p>Your facility is pending approval. You can sign in after a System Admin reviews the registration.</p> }
+                    <h1 id="register-title">Registration complete</h1>
+                    <p>Registration completed successfully. You can now sign in with the administrator account you created.</p>
                     <a class="bl-btn bl-btn-primary bl-btn-lg" href="/account/login">Continue to sign in</a>
                 </div>
             }
@@ -25,7 +22,7 @@
                 <div class="bl-form-card-heading">
                     <span class="bl-form-logo"><AppIcon Name="droplet" Size="21" Filled="true" /></span>
                     <h1 id="register-title">Register your facility</h1>
-                    <p>Join the BloodLink network. Facility and administrator details will be reviewed by the BloodLink team.</p>
+                    <p>Join the BloodLink network and create your facility workspace.</p>
                 </div>
                 <Feedback Message="@Message" />
                 <form class="bl-form-grid" @onsubmit="Submit" @onsubmit:preventDefault>
@@ -44,7 +41,7 @@
                     </fieldset>
                     <fieldset class="bl-fieldset bl-field-full">
                         <legend>Facility administrator</legend>
-                        <p class="bl-fieldset-help">This account will manage the facility after approval.</p>
+                        <p class="bl-fieldset-help">This account will manage the facility workspace.</p>
                         <div class="bl-form-grid">
                             <label class="bl-field"><span class="bl-label">First name <span>*</span></span><input class="bl-input" required @bind="Form.AdminFirstName" /></label>
                             <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><input class="bl-input" required @bind="Form.AdminLastName" /></label>

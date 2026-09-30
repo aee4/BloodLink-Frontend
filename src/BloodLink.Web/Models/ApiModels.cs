@@ -44,10 +44,9 @@ public sealed record NotificationDto(Guid Id, int NotificationType, string Title
 public sealed record UnreadCountDto(int Count);
 public sealed record DashboardNeedDto(Guid Id, BloodType BloodType, int UnitsNeeded, UrgencyLevel Urgency,
     BloodNeedStatus Status, DateTime CreatedAtUtc);
-public sealed record DashboardFacilityDto(Guid Id, string Name, string City, string Region, DateTime CreatedAtUtc);
 public sealed record DashboardActivityDto(string Action, string Summary, DateTime CreatedAtUtc, string? EntityType, Guid? EntityId);
-public sealed record SystemDashboardDto(int PendingFacilities, int ApprovedFacilities, int SuspendedFacilities,
-    int ActiveRequests, IReadOnlyList<DashboardFacilityDto> PendingReviews, IReadOnlyList<DashboardActivityDto> RecentActivity);
+public sealed record SystemDashboardDto(int ActiveFacilities, int SuspendedFacilities, int TotalFacilities,
+    int ActiveRequests, IReadOnlyList<DashboardActivityDto> RecentActivity);
 public sealed record FacilityDashboardDto(int OpenNeeds, int SentRequests, int ReceivedRequests, int LowStockItems,
     long TotalInventoryUnits, long AvailableInventoryUnits, int UnreadNotifications,
     IReadOnlyList<DashboardNeedDto> PendingNeeds, IReadOnlyList<DashboardActivityDto> RecentActivity);

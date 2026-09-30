@@ -56,10 +56,10 @@
     {
         <section class="bl-card bl-card-pad bl-record-detail"><p class="bl-eyebrow">Your account</p><h2 class="bl-card-title">Account details</h2>
             @if (Session.User?.MustChangePassword == true) { <div class="bl-alert bl-alert-info" role="status">Your administrator requires a password change before continuing. <a href="/account/change-password">Change password</a></div> }
-            @if (Session.User?.FacilityStatus == FacilityStatus.Pending) { <div class="bl-alert bl-alert-info" role="status">Facility registration is awaiting System Admin approval. Operational access is not available until approval.</div> }
+            @if (Session.User?.FacilityStatus == FacilityStatus.Pending) { <div class="bl-alert bl-alert-info" role="status">This legacy facility registration is not active. Contact BloodLink support for assistance.</div> }
             @if (Session.User?.FacilityStatus == FacilityStatus.Suspended) { <div class="bl-alert bl-alert-danger" role="alert">This facility is suspended. Contact BloodLink support for assistance.</div> }
             @if (Session.User?.FacilityStatus == FacilityStatus.Rejected) { <div class="bl-alert bl-alert-danger" role="alert">This facility registration was rejected. Contact BloodLink support for assistance.</div> }
-            <dl class="bl-facts"><div><dt>Name</dt><dd>@Session.User?.FirstName @Session.User?.LastName</dd></div><div><dt>Email</dt><dd>@Session.User?.Email</dd></div><div><dt>Role</dt><dd>@RoleLabel</dd></div>@if (Session.User?.FacilityStatus is FacilityStatus facilityStatus) { <div><dt>Facility access</dt><dd><span class="bl-status-badge @FacilityStatusClass(facilityStatus)">@facilityStatus</span></dd></div> }</dl>
+            <dl class="bl-facts"><div><dt>Name</dt><dd>@Session.User?.FirstName @Session.User?.LastName</dd></div><div><dt>Email</dt><dd>@Session.User?.Email</dd></div><div><dt>Role</dt><dd>@RoleLabel</dd></div>@if (Session.User?.FacilityStatus is FacilityStatus facilityStatus) { <div><dt>Facility access</dt><dd><span class="bl-status-badge @FacilityStatusClass(facilityStatus)">@FacilityStatusLabel(facilityStatus)</span></dd></div> }</dl>
             <div class="bl-form-actions"><a class="bl-btn bl-btn-outline" href="/account/change-password">Change password</a></div>
         </section>
     }
@@ -71,7 +71,7 @@
     {
         @if (Data is FacilityDto facility)
         {
-            <section class="bl-panel"><dl><dt>Facility</dt><dd>@facility.Name</dd><dt>Status</dt><dd>@facility.Status</dd><dt>Registration</dt><dd>@facility.RegistrationNumber</dd></dl><form @onsubmit="UpdateFacility" @onsubmit:preventDefault><label>Address<input required @bind="Address" /></label><label>Contact email<input type="email" required @bind="ContactEmail" /></label><label>Contact phone<input required @bind="ContactPhone" /></label><button class="bl-button bl-button-primary">Save profile</button></form></section>
+            <section class="bl-panel"><dl><dt>Facility</dt><dd>@facility.Name</dd><dt>Status</dt><dd>@FacilityStatusLabel(facility.Status)</dd><dt>Registration</dt><dd>@facility.RegistrationNumber</dd></dl><form @onsubmit="UpdateFacility" @onsubmit:preventDefault><label>Address<input required @bind="Address" /></label><label>Contact email<input type="email" required @bind="ContactEmail" /></label><label>Contact phone<input required @bind="ContactPhone" /></label><button class="bl-button bl-button-primary">Save profile</button></form></section>
         }
     }
     else if (Path == "/facility/staff/create")
@@ -111,7 +111,7 @@
     }
     else if (Path == "/system/facilities" && Session.User?.Roles.Contains("SystemAdmin") == true)
     {
-        <section class="bl-toolbar"><label>Filter status<InputSelect @bind-Value="FacilityStatusFilter" @bind:after="Load"><option value="0">Pending</option><option value="1">Approved</option><option value="2">Rejected</option><option value="3">Suspended</option></InputSelect></label></section>
+        <section class="bl-toolbar"><label>Filter status<InputSelect @bind-Value="FacilityStatusFilter" @bind:after="Load"><option value="1">Active</option><option value="3">Suspended</option><option value="0">Legacy pending</option><option value="2">Rejected (legacy)</option></InputSelect></label></section>
     }
     @if (Data is not null)
     {
@@ -125,7 +125,7 @@
         { <div class="bl-actions"><button class="bl-btn bl-btn-outline" @onclick="MarkAllNotificationsRead">Mark all as read</button></div> }
         @if (Path == "/system/facilities/" + CurrentId)
         {
-            <section class="bl-panel"><label>Decision reason<textarea @bind="Reason"></textarea></label><div class="bl-actions">@if (Data is FacilityDto item && item.Status == FacilityStatus.Pending) { <button class="bl-button bl-button-primary" @onclick="ApproveFacility">Approve</button><button class="bl-button bl-button-secondary" @onclick="RejectFacility">Reject</button> }@if (Data is FacilityDto approved && approved.Status == FacilityStatus.Approved) { <button class="bl-button bl-button-secondary" @onclick="SuspendFacility">Suspend</button> }@if (Data is FacilityDto suspended && suspended.Status == FacilityStatus.Suspended) { <button class="bl-button bl-button-primary" @onclick="RestoreFacility">Restore</button> }</div></section>
+            <section class="bl-panel"><div class="bl-actions">@if (Data is FacilityDto approved && approved.Status == FacilityStatus.Approved) { <label>Suspension reason<textarea @bind="Reason"></textarea></label><button class="bl-button bl-button-secondary" @onclick="SuspendFacility">Suspend</button> }@if (Data is FacilityDto suspended && suspended.Status == FacilityStatus.Suspended) { <button class="bl-button bl-button-primary" @onclick="RestoreFacility">Unsuspend</button> }</div></section>
         }
         @if (Path.StartsWith("/needs/") && CurrentId is not null && Path != "/needs/new")
         {
@@ -190,7 +190,7 @@
     private string StaffFirst { get; set; } = ""; private string StaffLast { get; set; } = ""; private string StaffEmail { get; set; } = ""; private string StaffPhone { get; set; } = ""; private string StaffPassword { get; set; } = "";
     private BloodType SelectedBloodType { get; set; } private UrgencyLevel SelectedUrgency { get; set; }
     private int UnitsChange { get; set; } private int MinimumAvailable { get; set; } = 1; private int NeedUnits { get; set; } = 1; private int RequestUnits { get; set; } = 1; private int AcceptedUnits { get; set; } = 1;
-    private int FacilityStatusFilter { get; set; } private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
+    private int FacilityStatusFilter { get; set; } = (int)FacilityStatus.Approved; private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
     private string NeedIdText { get; set; } = ""; private string SourceFacilityText { get; set; } = ""; private DateTime NeededByLocal { get; set; } = DateTime.Now.AddHours(1); private bool DeadlineError { get; set; }
     private NeedDetailDto? RequestNeed { get; set; }
     private int? RequestSourceAvailable { get; set; }
@@ -303,10 +303,8 @@
         if (!RequestSources.Any(source => source.FacilityId.ToString() == SourceFacilityText))
             SourceFacilityText = RequestSources.FirstOrDefault()?.FacilityId.ToString() ?? "";
     }
-    private Task ApproveFacility() => Run(() => Facilities.Approve(CurrentId!.Value), "Facility approved.");
-    private Task RejectFacility() => AskConfirmation("Reject this facility registration? The reason will be recorded.", () => Run(() => Facilities.Reject(CurrentId!.Value, Reason), "Facility rejected."));
     private Task SuspendFacility() => AskConfirmation("Suspend this facility? Its users will lose operational access.", () => Run(() => Facilities.Suspend(CurrentId!.Value, Reason), "Facility suspended."));
-    private Task RestoreFacility() => Run(() => Facilities.Restore(CurrentId!.Value), "Facility restored.");
+    private Task RestoreFacility() => Run(() => Facilities.Restore(CurrentId!.Value), "Facility unsuspended.");
     private Task StartNeedSearch() => Run(() => Needs.StartSearch(CurrentId!.Value), "Need search started.");
     private Task FulfilNeed() => Run(() => Needs.Fulfil(CurrentId!.Value, Reason), "Need fulfilled internally.");
     private Task RejectNeed() => AskConfirmation("Reject this blood need?", () => Run(() => Needs.Reject(CurrentId!.Value, Reason), "Need rejected."));
@@ -343,7 +341,8 @@
     private Task MarkNotificationReadId(Guid id) => Run(() => Notifications.MarkRead(id), "Notification marked as read.");
     private Task MarkAllNotificationsRead() => Run(() => Notifications.MarkAllRead(), "Notifications marked as read.");
     private string? LinkForRecord(Guid id) => Path.StartsWith("/needs") ? $"/needs/{id}" : Path.StartsWith("/requests") ? $"/requests/{id}" : Path.StartsWith("/system/facilities") ? $"/system/facilities/{id}" : null;
-    private static string FacilityStatusClass(FacilityStatus status) => status switch { FacilityStatus.Approved => "bl-status-success", FacilityStatus.Pending => "bl-status-warning", _ => "bl-status-danger" };
+    private static string FacilityStatusClass(FacilityStatus status) => status switch { FacilityStatus.Approved => "bl-status-success", FacilityStatus.Pending => "bl-status-neutral", _ => "bl-status-danger" };
+    private static string FacilityStatusLabel(FacilityStatus status) => status switch { FacilityStatus.Approved => "Active", FacilityStatus.Pending => "Legacy pending", FacilityStatus.Rejected => "Rejected (legacy)", FacilityStatus.Suspended => "Suspended", _ => "Unknown" };
     private Guid? CurrentId => Guid.TryParse(Path.Split('/').Last(), out var id) ? id : null;
     private bool CanAccessPath()
     {

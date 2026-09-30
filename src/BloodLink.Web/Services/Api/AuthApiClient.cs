@@ -53,8 +53,6 @@ public sealed class FacilityApiClient(HttpClient http) : BackendApiClient(http)
     public Task<Paged<FacilityDto>> SystemList(int status, int page = 1, CancellationToken ct = default) =>
         Get<Paged<FacilityDto>>($"api/v1/system/facilities?status={status}&page={page}&pageSize=25", ct);
     public Task<FacilityDto> SystemGet(Guid id, CancellationToken ct = default) => Get<FacilityDto>($"api/v1/system/facilities/{id}", ct);
-    public Task Approve(Guid id, CancellationToken ct = default) => Post($"api/v1/system/facilities/{id}/approve", ct);
-    public Task Reject(Guid id, string reason, CancellationToken ct = default) => Post($"api/v1/system/facilities/{id}/reject", new { reason }, ct);
     public Task Suspend(Guid id, string reason, CancellationToken ct = default) => Post($"api/v1/system/facilities/{id}/suspend", new { reason }, ct);
     public Task Restore(Guid id, CancellationToken ct = default) => Post($"api/v1/system/facilities/{id}/restore", ct);
 }

@@ -3,7 +3,7 @@
 @if (Data is FacilityDto facility)
 {
     <section class="bl-card bl-card-pad bl-record-detail" aria-labelledby="record-heading">
-        <div class="bl-record-title"><div><p class="bl-eyebrow">Facility registration</p><h2 id="record-heading">@facility.Name</h2><p>@facility.FacilityType · @facility.City, @facility.Region</p></div><span class="bl-status-badge @StatusClass(facility.Status.ToString())">@Label(facility.Status.ToString())</span></div>
+        <div class="bl-record-title"><div><p class="bl-eyebrow">Facility</p><h2 id="record-heading">@facility.Name</h2><p>@facility.FacilityType · @facility.City, @facility.Region</p></div><span class="bl-status-badge @FacilityStatusClass(facility.Status)">@FacilityStatusLabel(facility.Status)</span></div>
         <dl class="bl-facts"><div><dt>Registration number</dt><dd>@facility.RegistrationNumber</dd></div><div><dt>Address</dt><dd>@facility.Address</dd></div><div><dt>Contact email</dt><dd>@facility.ContactEmail</dd></div><div><dt>Contact phone</dt><dd>@facility.ContactPhone</dd></div><div><dt>Registered</dt><dd>@facility.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</dd></div>@if (!string.IsNullOrWhiteSpace(facility.RejectionReason)) { <div><dt>Decision note</dt><dd>@facility.RejectionReason</dd></div> }</dl>
     </section>
 }
@@ -102,6 +102,8 @@ else if (Data is not null)
 
     private static string Blood(BloodType type) => type switch { BloodType.APositive => "A+", BloodType.ANegative => "A-", BloodType.BPositive => "B+", BloodType.BNegative => "B-", BloodType.ABPositive => "AB+", BloodType.ABNegative => "AB-", BloodType.OPositive => "O+", _ => "O-" };
     private static string Label(string value) => System.Text.RegularExpressions.Regex.Replace(value, "(?<=[a-z])([A-Z])", " $1");
+    private static string FacilityStatusClass(FacilityStatus status) => status switch { FacilityStatus.Approved => "bl-status-success", FacilityStatus.Suspended or FacilityStatus.Rejected => "bl-status-danger", _ => "bl-status-neutral" };
+    private static string FacilityStatusLabel(FacilityStatus status) => status switch { FacilityStatus.Approved => "Active", FacilityStatus.Pending => "Legacy pending", FacilityStatus.Rejected => "Rejected (legacy)", FacilityStatus.Suspended => "Suspended", _ => "Unknown" };
     private static string StatusClass(string value) => value switch { "Approved" or "Active" or "FulfilledInternally" or "FulfilledExternally" or "Accepted" or "Read" => "bl-status-success", "Pending" or "PendingReview" or "PendingActivation" or "Searching" or "Sent" or "Urgent" => "bl-status-warning", "Rejected" or "Suspended" or "Inactive" or "Cancelled" or "Emergency" => "bl-status-danger", _ => "bl-status-neutral" };
 
 }

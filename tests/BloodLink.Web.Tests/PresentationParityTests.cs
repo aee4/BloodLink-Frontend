@@ -21,6 +21,19 @@ public sealed class PresentationParityTests
     }
 
     [Fact]
+    public void Public_home_describes_immediate_facility_activation_without_an_approval_queue()
+    {
+        var home = Read("src/BloodLink.Web/Pages/Home.razor");
+
+        Assert.Contains("Your facility and initial administrator are activated immediately.", home, StringComparison.Ordinal);
+        Assert.Contains("Sign in right away; a System Administrator can suspend access later if needed.", home, StringComparison.Ordinal);
+        Assert.DoesNotContain("review and approval", home, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("pending approval", home, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("awaiting approval", home, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("after approval", home, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Public_and_authenticated_navigation_have_working_mobile_controls()
     {
         var publicHeader = Read("src/BloodLink.Web/Layout/PublicHeader.razor");
@@ -106,6 +119,9 @@ public sealed class PresentationParityTests
         Assert.Contains("bl-form-card", registration, StringComparison.Ordinal);
         Assert.Contains("Facilities.Register(new(", registration, StringComparison.Ordinal);
         Assert.Contains("Form.AdminPassword = \"\"", registration, StringComparison.Ordinal);
+        Assert.Contains("Registration completed successfully.", registration, StringComparison.Ordinal);
+        Assert.DoesNotContain("pending approval", registration, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("after approval", registration, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -135,12 +151,35 @@ public sealed class PresentationParityTests
         var dashboard = Read("src/BloodLink.Web/Components/DashboardOverview.razor");
         var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
 
-        Assert.Contains("pendingFacilities", dashboard, StringComparison.Ordinal);
+        Assert.Contains("activeFacilities", dashboard, StringComparison.Ordinal);
+        Assert.Contains("suspendedFacilities", dashboard, StringComparison.Ordinal);
+        Assert.Contains("totalFacilities", dashboard, StringComparison.Ordinal);
+        Assert.DoesNotContain("pendingReviews", dashboard, StringComparison.Ordinal);
+        Assert.DoesNotContain("Facilities awaiting review", dashboard, StringComparison.Ordinal);
         Assert.Contains("openNeeds", dashboard, StringComparison.Ordinal);
         Assert.Contains("myOpenNeeds", dashboard, StringComparison.Ordinal);
         Assert.Contains("recentActivity", dashboard, StringComparison.Ordinal);
         Assert.Contains("bl-stat-grid", dashboard, StringComparison.Ordinal);
         Assert.Contains("<DashboardOverview Data=\"dashboardData\" />", workspace, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Facility_governance_removes_manual_approval_and_preserves_system_admin_suspension()
+    {
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        var api = Read("src/BloodLink.Web/Services/Api/AuthApiClient.cs");
+        var records = Read("src/BloodLink.Web/Components/OperationalRecords.razor");
+
+        Assert.DoesNotContain("ApproveFacility", workspace, StringComparison.Ordinal);
+        Assert.DoesNotContain("Facilities.Approve", api, StringComparison.Ordinal);
+        Assert.DoesNotContain("Facilities.Reject", api, StringComparison.Ordinal);
+        Assert.DoesNotContain("system/facilities/{id}/approve", api, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("system/facilities/{id}/reject", api, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("@onclick=\"SuspendFacility\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("@onclick=\"RestoreFacility\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("FacilityStatus.Approved => \"Active\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("FacilityStatus.Suspended => \"Suspended\"", records, StringComparison.Ordinal);
+        Assert.Contains("FacilityStatus.Pending => \"Legacy pending\"", records, StringComparison.Ordinal);
     }
 
     [Fact]
