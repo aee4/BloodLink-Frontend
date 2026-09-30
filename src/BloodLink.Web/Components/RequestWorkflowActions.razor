@@ -1,0 +1,59 @@
+﻿@using BloodLink.Web.Models
+
+@if (Request.Status == BloodRequestStatus.Sent)
+{
+    <section class="bl-card bl-card-pad bl-workflow-actions bl-request-actions" aria-labelledby="request-actions-title">
+        <h2 id="request-actions-title" class="bl-card-title">Respond to request</h2>
+        <p>Choose to accept the full requested amount or reject this request. Partial acceptance is temporarily disabled because fulfilling a partial amount can close the linked need.</p>
+        <p class="bl-stock-check"><strong>Available stock at your facility:</strong> @(Available?.ToString() ?? "Unavailable") units</p>
+        @if (Available is int available && available < Request.UnitsRequested)
+        {
+            <p class="bl-alert bl-alert-danger" role="alert">Your facility does not currently have enough available units to fulfil this request.</p>
+        }
+        else if (Available is null)
+        {
+            <p class="bl-alert bl-alert-info" role="status">Available stock could not be confirmed. Acceptance is disabled until the full requested amount can be verified.</p>
+        }
+        <div class="bl-actions"><button class="bl-btn bl-btn-primary" disabled="@(Busy || Available is null || Available.Value < Request.UnitsRequested)" @onclick="Accept">Accept full request</button></div>
+        <div class="bl-request-reject">
+            <label class="bl-field"><span class="bl-label">Rejection reason <span aria-hidden="true">(required)</span></span><textarea class="bl-input bl-textarea" required aria-required="true" aria-describedby="request-rejection-help" maxlength="1000" value="@Reason" @oninput="UpdateReason"></textarea><span id="request-rejection-help" class="bl-field-help">Explain why your facility cannot fulfil this request.</span></label>
+            <button class="bl-btn bl-btn-danger" disabled="@(Busy || string.IsNullOrWhiteSpace(Reason))" @onclick="Reject">Reject request</button>
+        </div>
+        <details class="bl-request-more-actions"><summary>More actions</summary><p>Cancelling a Sent request closes it.</p><button class="bl-btn bl-btn-outline" disabled="@Busy" @onclick="Cancel">Cancel request</button></details>
+    </section>
+}
+else if (Request.Status == BloodRequestStatus.Accepted)
+{
+    <section class="bl-card bl-card-pad bl-workflow-actions bl-request-actions" aria-labelledby="request-actions-title">
+        <h2 id="request-actions-title" class="bl-card-title">Accepted — @(Request.UnitsAccepted ?? 0) units reserved</h2>
+        <p>Requested: @Request.UnitsRequested units · Accepted and reserved: @(Request.UnitsAccepted ?? 0) units · Current unreserved availability: @(Available?.ToString() ?? "Unavailable") units.</p>
+        <p class="bl-alert bl-alert-info" role="status">These units are reserved for this request. Inventory has not been transferred yet.</p>
+        <button class="bl-btn bl-btn-primary" disabled="@Busy" @onclick="Handover">Confirm handover</button>
+        <details class="bl-request-more-actions"><summary>More actions</summary><p>Cancelling an Accepted request releases its reserved units.</p><button class="bl-btn bl-btn-outline" disabled="@Busy" @onclick="Cancel">Cancel request</button></details>
+    </section>
+}
+else
+{
+    <section class="bl-card bl-card-pad bl-workflow-actions bl-request-final-state" aria-labelledby="request-final-title">
+        <h2 id="request-final-title" class="bl-card-title">@Request.Status</h2>
+        <p>This request is read-only. No further actions are available.</p>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public RequestDto Request { get; set; } = default!;
+    [Parameter] public int? Available { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string Reason { get; set; } = "";
+    [Parameter] public EventCallback<string> ReasonChanged { get; set; }
+    [Parameter] public EventCallback Accept { get; set; }
+    [Parameter] public EventCallback Reject { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+    [Parameter] public EventCallback Handover { get; set; }
+
+    private async Task UpdateReason(ChangeEventArgs args)
+    {
+        Reason = args.Value?.ToString() ?? "";
+        await ReasonChanged.InvokeAsync(Reason);
+    }
+}

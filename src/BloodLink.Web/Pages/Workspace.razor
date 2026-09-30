@@ -43,7 +43,7 @@
         <div class="bl-modal-backdrop" @onclick="DismissConfirmation">
             <section class="bl-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-description" tabindex="-1" @onclick:stopPropagation>
                 <h2 id="confirm-title" class="bl-card-title">Confirm action</h2><p id="confirm-description" class="bl-card-desc">@ConfirmText</p>
-                <div class="bl-confirm-actions"><button class="bl-btn bl-btn-outline" @onclick="DismissConfirmation">Cancel</button><button class="bl-btn bl-btn-danger" @onclick="ConfirmAction">Continue</button></div>
+                <div class="bl-confirm-actions"><button class="bl-btn bl-btn-outline" autofocus @onclick="DismissConfirmation">@CancelButtonText</button><button class="bl-btn bl-btn-danger" @onclick="ConfirmAction">@ConfirmButtonText</button></div>
             </section>
         </div>
     }
@@ -167,19 +167,20 @@
                 </section>
             }
         }
-        @if (Data is RequestDto request && Session.User?.FacilityId == request.SourceFacilityId)
-        {
-            <section class="bl-card bl-card-pad bl-workflow-actions" aria-labelledby="request-actions-title"><h2 id="request-actions-title" class="bl-card-title">Source facility actions</h2><label class="bl-field"><span class="bl-label">Units accepted</span><input class="bl-input" type="number" min="1" max="@(Math.Min(request.UnitsRequested, RequestSourceAvailable ?? request.UnitsRequested))" @bind="AcceptedUnits" /></label><label class="bl-field"><span class="bl-label">Response note</span><textarea class="bl-input bl-textarea" maxlength="1000" @bind="Reason"></textarea></label><div class="bl-actions">@if (request.Status == BloodRequestStatus.Sent) { <button class="bl-btn bl-btn-primary" disabled="@(RequestSourceAvailable is null or 0)" @onclick="AcceptRequest">Accept units</button><button class="bl-btn bl-btn-danger" @onclick="RejectRequest">Reject</button> }@if (request.Status is BloodRequestStatus.Sent or BloodRequestStatus.Accepted) { <button class="bl-btn bl-btn-outline" @onclick="CancelRequest">Cancel request</button> }@if (request.Status == BloodRequestStatus.Accepted) { <button class="bl-btn bl-btn-primary" @onclick="FulfilRequest">Confirm handover and fulfil</button> }</div></section>
-        }
         @if (Path != "/dashboard")
         {
-            @if (TimelineData is not null)
+            @if (Data is RequestDto request)
             {
-                <div class="bl-detail-grid"><div class="bl-detail-main"><OperationalRecords Data="Data" RequestSourceAvailable="RequestSourceAvailable" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" /></div><aside class="bl-detail-aside"><OperationalRecords Data="TimelineData" /></aside></div>
+                <div class="bl-request-detail-flow"><OperationalRecords Data="request" RequestSourceAvailable="RequestSourceAvailable" RequestNeededBy="@RequestNeed?.NeededByUtc" RequestNeedNote="@RequestNeed?.Note" /><div class="bl-request-actions-slot">@if (Session.User?.FacilityId == request.SourceFacilityId && Session.User?.Roles.Contains("FacilityAdmin") == true) { <RequestWorkflowActions Request="request" Available="RequestSourceAvailable" Busy="Busy" Accept="AcceptRequest" Reject="RejectRequest" Cancel="CancelRequest" Handover="ConfirmHandover" @bind-Reason="Reason" /> }</div></div>
+                @if (TimelineData is not null) { <OperationalRecords Data="TimelineData" /> }
+            }
+            else if (TimelineData is not null)
+            {
+                <div class="bl-detail-grid"><div class="bl-detail-main"><OperationalRecords Data="Data" RequestSourceAvailable="RequestSourceAvailable" IsReceivedRequestList="@(Path == "/requests/received")" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" /></div><aside class="bl-detail-aside"><OperationalRecords Data="TimelineData" /></aside></div>
             }
             else
             {
-                <OperationalRecords Data="Data" StaffAction="ChangeStaff" NotificationRead="MarkNotificationReadId" PageChanged="ChangePage" RequestSourceAvailable="RequestSourceAvailable" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" />
+                <OperationalRecords Data="Data" StaffAction="ChangeStaff" NotificationRead="MarkNotificationReadId" PageChanged="ChangePage" RequestSourceAvailable="RequestSourceAvailable" IsReceivedRequestList="@(Path == "/requests/received")" IsFacilityAdmin="@(Session.User?.Roles.Contains("FacilityAdmin") == true)" LowStock="LowStockItems" />
             }
         }
         }
@@ -211,10 +212,12 @@
     private ValidationMessageStore PasswordServerMessages { get; set; } = default!;
     private ValidationMessageStore ProfileServerMessages { get; set; } = default!;
     private string? ConfirmText { get; set; }
+    private string ConfirmButtonText { get; set; } = "Continue";
+    private string CancelButtonText { get; set; } = "Cancel";
     private Func<Task>? PendingConfirmation { get; set; }
     private bool Busy { get; set; } = true;
     private BloodType SelectedBloodType { get; set; } private UrgencyLevel SelectedUrgency { get; set; }
-    private int UnitsChange { get; set; } private int MinimumAvailable { get; set; } = 1; private int NeedUnits { get; set; } = 1; private int RequestUnits { get; set; } = 1; private int AcceptedUnits { get; set; } = 1;
+    private int UnitsChange { get; set; } private int MinimumAvailable { get; set; } = 1; private int NeedUnits { get; set; } = 1; private int RequestUnits { get; set; } = 1;
     private int FacilityStatusFilter { get; set; } = (int)FacilityStatus.Approved; private string Reason { get; set; } = ""; private string Note { get; set; } = ""; private string RequestNoteText { get; set; } = "";
     private string NeedIdText { get; set; } = ""; private string SourceFacilityText { get; set; } = ""; private DateTime NeededByLocal { get; set; } = DateTime.Now.AddHours(1); private bool DeadlineError { get; set; }
     private NeedDetailDto? RequestNeed { get; set; }
@@ -294,6 +297,10 @@
             if (Data is FacilityDto facility) { ProfileForm.Address = facility.Address; ProfileForm.ContactEmail = facility.ContactEmail; ProfileForm.ContactPhone = facility.ContactPhone; ProfileEditContext.NotifyValidationStateChanged(); }
             if (Data is RequestDto currentRequest)
             {
+                if (currentRequest.RequestingFacilityId == Session.User?.FacilityId)
+                {
+                    try { RequestNeed = await Needs.Get(currentRequest.BloodNeedId); } catch (ApiException) { }
+                }
                 try
                 {
                     RequestSourceAvailable = Session.User?.FacilityId == currentRequest.SourceFacilityId
@@ -428,15 +435,22 @@
     private Task FulfilNeed() => Run(() => Needs.Fulfil(CurrentId!.Value, Reason), "Need fulfilled internally.");
     private Task RejectNeed() => AskConfirmation("Reject this blood need?", () => Run(() => Needs.Reject(CurrentId!.Value, Reason), "Need rejected."));
     private Task CancelNeed() => AskConfirmation("Cancel this blood need?", () => Run(() => Needs.Cancel(CurrentId!.Value, Reason), "Need cancelled."));
+    // Full-request-only acceptance prevents the known backend behavior where partial fulfillment can close the entire linked need.
     private Task AcceptRequest()
     {
-        if (Data is not RequestDto request || RequestSourceAvailable is not int available || AcceptedUnits < 1 || AcceptedUnits > available || AcceptedUnits > request.UnitsRequested)
-            return SetMessage("Accepted units must be within the requested amount and current available stock.");
-        return Run(() => Requests.Accept(CurrentId!.Value, AcceptedUnits, Reason), "Request response saved.");
+        if (Busy || Data is not RequestDto request || request.Status != BloodRequestStatus.Sent || !RequestAcceptancePolicy.CanAcceptFullRequest(request.UnitsRequested, RequestSourceAvailable))
+            return SetMessage("Your facility needs enough available stock to accept the full request.");
+        return Run(() => Requests.Accept(CurrentId!.Value, request.UnitsRequested, null), "Full request accepted and units reserved.");
     }
-    private Task RejectRequest() => Run(() => Requests.Reject(CurrentId!.Value, Reason), "Request rejected.");
-    private Task CancelRequest() => AskConfirmation("Cancel this request? Any reserved units will be released.", () => Run(() => Requests.Cancel(CurrentId!.Value), "Request cancelled and any reservation released."));
-    private Task FulfilRequest() => Run(() => Requests.Fulfil(CurrentId!.Value, Reason), "Request marked fulfilled.");
+    private Task RejectRequest() => Busy || Data is not RequestDto request || request.Status != BloodRequestStatus.Sent || string.IsNullOrWhiteSpace(Reason)
+        ? SetMessage("Enter a rejection reason before rejecting this request.")
+        : Run(() => Requests.Reject(CurrentId!.Value, Reason.Trim()), "Request rejected.");
+    private Task CancelRequest() => Data is not RequestDto request ? Task.CompletedTask : AskConfirmation(
+        request.Status == BloodRequestStatus.Accepted ? "Cancel this Accepted request? Its reserved units will be released." : "Cancel this Sent request? It will be closed.",
+        () => Run(() => Requests.Cancel(CurrentId!.Value), "Request cancelled."));
+    private Task ConfirmHandover() => Data is not RequestDto request || request.Status != BloodRequestStatus.Accepted ? Task.CompletedTask : AskConfirmation(
+        $"Confirm physical handover of {request.UnitsAccepted ?? 0} units of {BloodTypeLabel(request.BloodType)} to {request.RequestingFacilityName}? Source inventory will decrease and requesting facility inventory will increase.",
+        () => Run(() => Requests.Fulfil(CurrentId!.Value, null), "Handover confirmed. Request fulfilled and inventory transferred."), "Confirm handover", "Go back");
     private async Task ChangeStaff(Dictionary<string, string> row)
     {
         var userId = row.GetValueOrDefault("UserId");
@@ -475,7 +489,8 @@
         return roles.Contains("SystemAdmin") || roles.Contains("FacilityAdmin") || roles.Contains("FacilityStaff");
     }
     private Task SetMessage(string text) { Message = text; return Task.CompletedTask; }
-    private Task AskConfirmation(string text, Func<Task> action) { ConfirmText = text; PendingConfirmation = action; return Task.CompletedTask; }
+    private static string BloodTypeLabel(BloodType type) => type switch { BloodType.APositive => "A+", BloodType.ANegative => "A-", BloodType.BPositive => "B+", BloodType.BNegative => "B-", BloodType.ABPositive => "AB+", BloodType.ABNegative => "AB-", BloodType.OPositive => "O+", _ => "O-" };
+    private Task AskConfirmation(string text, Func<Task> action, string confirmButton = "Continue", string cancelButton = "Cancel") { ConfirmText = text; PendingConfirmation = action; ConfirmButtonText = confirmButton; CancelButtonText = cancelButton; return Task.CompletedTask; }
     private async Task ConfirmAction()
     {
         var action = PendingConfirmation; ConfirmText = null; PendingConfirmation = null;

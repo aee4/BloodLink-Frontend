@@ -364,6 +364,99 @@ public sealed class PresentationParityTests
         Assert.Contains("https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com", File.ReadAllText(Path.Combine(publishRoot, "appsettings.json")), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Request_lists_use_explicit_view_actions_and_distinguish_received_from_sent_facilities()
+    {
+        var records = Read("src/BloodLink.Web/Components/OperationalRecords.razor");
+        Assert.Contains("View request</a>", records, StringComparison.Ordinal);
+        Assert.Contains("aria-label=", records, StringComparison.Ordinal);
+        Assert.Contains("IsReceivedRequestList ? \"from\" : \"at\"", records, StringComparison.Ordinal);
+        Assert.Contains("IsReceivedRequestList ?", records, StringComparison.Ordinal);
+        Assert.Contains("bl-request-cards", records, StringComparison.Ordinal);
+        var requestListStart = records.IndexOf("else if (Data is Paged<RequestDto> requests)", StringComparison.Ordinal);
+        var requestListEnd = records.IndexOf("else if (Data is Paged<NotificationDto>", requestListStart, StringComparison.Ordinal);
+        Assert.True(requestListStart >= 0 && requestListEnd > requestListStart);
+        var requestList = records[requestListStart..requestListEnd];
+        Assert.Contains("<span class=\"bl-status-badge", requestList, StringComparison.Ordinal);
+        Assert.Contains("href=\"@($\"/requests/{item.Id}\")\">View request</a>", requestList, StringComparison.Ordinal);
+        Assert.DoesNotContain("<a href=\"@($\"/requests/{item.Id}\")\"><span class=\"bl-status-badge", requestList, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Request_acceptance_is_full_amount_only_and_requires_sufficient_stock()
+    {
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        var actions = Read("src/BloodLink.Web/Components/RequestWorkflowActions.razor");
+        Assert.Contains("Requests.Accept(CurrentId!.Value, request.UnitsRequested, null)", workspace, StringComparison.Ordinal);
+        Assert.Contains("known backend behavior where partial fulfillment can close the entire linked need", workspace, StringComparison.Ordinal);
+        Assert.Contains("Accept full request", actions, StringComparison.Ordinal);
+        Assert.Contains("Your facility does not currently have enough available units to fulfil this request.", actions, StringComparison.Ordinal);
+        Assert.Contains("Available stock could not be confirmed", actions, StringComparison.Ordinal);
+        Assert.Contains("Available.Value < Request.UnitsRequested", actions, StringComparison.Ordinal);
+        Assert.False(BloodLink.Web.Services.RequestAcceptancePolicy.CanAcceptFullRequest(4, 3));
+        Assert.False(BloodLink.Web.Services.RequestAcceptancePolicy.CanAcceptFullRequest(4, null));
+        Assert.False(BloodLink.Web.Services.RequestAcceptancePolicy.CanAcceptFullRequest(0, 4));
+        Assert.True(BloodLink.Web.Services.RequestAcceptancePolicy.CanAcceptFullRequest(4, 4));
+        Assert.True(BloodLink.Web.Services.RequestAcceptancePolicy.CanAcceptFullRequest(4, 8));
+    }
+
+    [Fact]
+    public void Request_decision_controls_require_rejection_reason_and_demote_cancel()
+    {
+        var actions = Read("src/BloodLink.Web/Components/RequestWorkflowActions.razor");
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        Assert.Contains("Rejection reason", actions, StringComparison.Ordinal);
+        Assert.Contains("required aria-required=", actions, StringComparison.Ordinal);
+        Assert.Contains("@oninput=\"UpdateReason\"", actions, StringComparison.Ordinal);
+        Assert.Contains("ReasonChanged.InvokeAsync(Reason)", actions, StringComparison.Ordinal);
+        Assert.Contains("string.IsNullOrWhiteSpace(Reason)", actions, StringComparison.Ordinal);
+        Assert.Contains("More actions", actions, StringComparison.Ordinal);
+        Assert.Contains("Cancel this Accepted request? Its reserved units will be released.", workspace, StringComparison.Ordinal);
+        Assert.Contains("Cancel this Sent request? It will be closed.", workspace, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Accepted_and_final_request_states_show_only_relevant_actions_and_handover_confirmation()
+    {
+        var actions = Read("src/BloodLink.Web/Components/RequestWorkflowActions.razor");
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        Assert.Contains("else if (Request.Status == BloodRequestStatus.Accepted)", actions, StringComparison.Ordinal);
+        var acceptedStateStart = actions.IndexOf("else if (Request.Status == BloodRequestStatus.Accepted)", StringComparison.Ordinal);
+        Assert.DoesNotContain("Accept full request", actions[acceptedStateStart..], StringComparison.Ordinal);
+        Assert.Contains("units reserved", actions, StringComparison.Ordinal);
+        Assert.Contains("These units are reserved for this request. Inventory has not been transferred yet.", actions, StringComparison.Ordinal);
+        Assert.Contains("bl-request-final-state", actions, StringComparison.Ordinal);
+        Assert.Contains("Handover=\"ConfirmHandover\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("physical handover", workspace, StringComparison.Ordinal);
+        Assert.Contains("Source inventory will decrease", workspace, StringComparison.Ordinal);
+        Assert.Contains("requesting facility inventory will increase", workspace, StringComparison.Ordinal);
+        Assert.Contains("Confirm handover", workspace, StringComparison.Ordinal);
+        Assert.Contains("Go back", workspace, StringComparison.Ordinal);
+        var detailsPosition = workspace.IndexOf("<OperationalRecords Data=\"request\"", StringComparison.Ordinal);
+        var timelinePosition = workspace.IndexOf("<OperationalRecords Data=\"TimelineData\"", detailsPosition, StringComparison.Ordinal);
+        Assert.True(detailsPosition >= 0 && timelinePosition > detailsPosition);
+    }
+
+    [Fact]
+    public void Request_details_use_existing_need_metadata_and_responsive_cards()
+    {
+        var workspace = Read("src/BloodLink.Web/Pages/Workspace.razor");
+        var records = Read("src/BloodLink.Web/Components/OperationalRecords.razor");
+        var css = Read("src/BloodLink.Web/wwwroot/app.css");
+        Assert.Contains("currentRequest.RequestingFacilityId == Session.User?.FacilityId", workspace, StringComparison.Ordinal);
+        Assert.Contains("Needs.Get(currentRequest.BloodNeedId)", workspace, StringComparison.Ordinal);
+        Assert.Contains("RequestNeededBy=\"@RequestNeed?.NeededByUtc\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("RequestNeedNote=\"@RequestNeed?.Note\"", workspace, StringComparison.Ordinal);
+        Assert.Contains("Requesting facility", records, StringComparison.Ordinal);
+        Assert.Contains("Source facility", records, StringComparison.Ordinal);
+        Assert.Contains("Needed by", records, StringComparison.Ordinal);
+        Assert.Contains("Request note", records, StringComparison.Ordinal);
+        Assert.Contains("@media (max-width: 900px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (max-width: 479px)", css, StringComparison.Ordinal);
+        Assert.Contains(".bl-request-table { display: none; }", css, StringComparison.Ordinal);
+        Assert.Contains(".bl-request-cards { display: grid; }", css, StringComparison.Ordinal);
+    }
+
     private static string Read(string relativePath) => File.ReadAllText(Path.Combine(Root, relativePath));
 
     private static string FindRoot()

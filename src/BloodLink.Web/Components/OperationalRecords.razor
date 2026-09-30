@@ -16,9 +16,22 @@ else if (Data is NeedDetailDto need)
 }
 else if (Data is RequestDto request)
 {
-    <section class="bl-card bl-card-pad bl-record-detail" aria-labelledby="record-heading">
-        <div class="bl-record-title"><div><p class="bl-eyebrow">Blood request</p><h2 id="record-heading">@Blood(request.BloodType) · @request.UnitsRequested units</h2><p>@request.RequestingFacilityName <AppIcon Name="arrow-right" Size="14" /> @request.SourceFacilityName</p></div><span class="bl-status-badge @StatusClass(request.Status.ToString())">@Label(request.Status.ToString())</span></div>
-        <dl class="bl-facts"><div><dt>Linked need</dt><dd><a href="@($"/needs/{request.BloodNeedId}")">View need details</a></dd></div><div><dt>Priority</dt><dd>@Label(request.Priority.ToString())</dd></div><div><dt>Units accepted</dt><dd>@(request.UnitsAccepted?.ToString() ?? "Not accepted")</dd></div><div><dt>Current source availability</dt><dd>@(RequestSourceAvailable?.ToString() ?? "Unavailable") units</dd></div><div><dt>Sent</dt><dd>@request.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div>@if (!string.IsNullOrWhiteSpace(request.RequestNote)) { <div><dt>Request note</dt><dd>@request.RequestNote</dd></div> }@if (!string.IsNullOrWhiteSpace(request.ResponseNote)) { <div><dt>Response</dt><dd>@request.ResponseNote</dd></div> }</dl>
+    <section class="bl-card bl-card-pad bl-record-detail bl-request-detail" aria-labelledby="record-heading">
+        <div class="bl-record-title"><div><p class="bl-eyebrow">Blood request</p><h2 id="record-heading">@Blood(request.BloodType) &middot; @request.UnitsRequested units requested</h2></div><span class="bl-status-badge @StatusClass(request.Status.ToString())">@Label(request.Status.ToString())</span></div>
+        <dl class="bl-facts">
+            <div><dt>Requesting facility</dt><dd>@request.RequestingFacilityName</dd></div><div><dt>Source facility</dt><dd>@request.SourceFacilityName</dd></div><div><dt>Status</dt><dd>@Label(request.Status.ToString())</dd></div><div><dt>Priority</dt><dd>@Label(request.Priority.ToString())</dd></div><div><dt>Units requested</dt><dd>@request.UnitsRequested</dd></div>
+            @if (request.UnitsAccepted is int accepted) { <div><dt>@(request.Status == BloodRequestStatus.Fulfilled ? "Units transferred" : "Accepted / reserved units")</dt><dd>@accepted</dd></div> }
+            <div><dt>Sent</dt><dd>@request.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div>
+            @if (RequestNeededBy is DateTime neededBy) { <div><dt>Needed by</dt><dd>@neededBy.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div> }
+            @if (!string.IsNullOrWhiteSpace(request.RequestNote)) { <div><dt>Request note</dt><dd>@request.RequestNote</dd></div> }
+            @if (!string.IsNullOrWhiteSpace(RequestNeedNote)) { <div><dt>Linked need note</dt><dd>@RequestNeedNote</dd></div> }
+            @if (!string.IsNullOrWhiteSpace(request.ResponseNote)) { <div><dt>Response / reason</dt><dd>@request.ResponseNote</dd></div> }
+            <div><dt>Source facility available now</dt><dd>@(RequestSourceAvailable?.ToString() ?? "Unavailable") units</dd></div>
+            @if (request.Status == BloodRequestStatus.Accepted) { <div><dt>Transferred</dt><dd>No transfer yet; handover has not been confirmed</dd></div> }
+            @if (request.Status == BloodRequestStatus.Fulfilled && request.FulfilledAtUtc is DateTime fulfilledAt) { <div><dt>Fulfilled</dt><dd>@fulfilledAt.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</dd></div> }
+            <div><dt>Linked need</dt><dd><a href="@($"/needs/{request.BloodNeedId}")">View need details</a></dd></div>
+        </dl>
+        @if (request.Status == BloodRequestStatus.Accepted) { <p class="bl-alert bl-alert-info" role="status">These units are reserved for this request. Inventory has not been transferred yet.</p> }
     </section>
 }
 else if (Data is Paged<FacilityDto> facilities)
@@ -69,8 +82,16 @@ else if (Data is Paged<NeedDto> needs)
 else if (Data is Paged<RequestDto> requests)
 {
     @if (requests.Items.Count == 0) { <DashboardEmptyState Title="No requests" Description="Requests will appear here as facilities coordinate stock." /> }
-    else { <div class="bl-card bl-table-wrap"><table class="bl-table"><thead><tr><th>Blood type</th><th>Facilities</th><th>Units</th><th>Priority</th><th>Status</th><th>Sent</th></tr></thead><tbody>@foreach (var item in requests.Items) { <tr><td><BloodTypeTag Type="item.BloodType" /></td><td>@item.RequestingFacilityName <span aria-hidden="true">→</span> @item.SourceFacilityName</td><td>@item.UnitsRequested@(item.UnitsAccepted is int accepted ? $" / {accepted} accepted" : "")</td><td><span class="bl-status-badge @StatusClass(item.Priority.ToString())">@Label(item.Priority.ToString())</span></td><td><a href="@($"/requests/{item.Id}")"><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></a></td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td></tr> }</tbody></table></div> }
-    <RecordPager Page="requests.PageNumber" HasNext="requests.HasNext" PageChanged="PageChanged" />
+    else
+    {
+        <div class="bl-card bl-table-wrap bl-request-table"><table class="bl-table"><thead><tr><th>Blood type</th><th>@(IsReceivedRequestList ? "Requesting facility" : "Source facility")</th><th>Units</th><th>Priority</th><th>Status</th><th>Sent</th><th>Response / reason</th><th>Action</th></tr></thead><tbody>@foreach (var item in requests.Items) { <tr><td><BloodTypeTag Type="item.BloodType" /></td><td>@(IsReceivedRequestList ? item.RequestingFacilityName : item.SourceFacilityName)</td><td>@item.UnitsRequested@(item.UnitsAccepted is int accepted ? $" / {accepted} accepted" : "")</td><td><span class="bl-status-badge @StatusClass(item.Priority.ToString())">@Label(item.Priority.ToString())</span></td><td><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></td><td>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</td><td>@(item.Status == BloodRequestStatus.Rejected ? item.ResponseNote ?? "Reason not provided" : item.Status == BloodRequestStatus.Fulfilled ? $"{item.UnitsAccepted ?? 0} units transferred" : item.UnitsAccepted is int acceptedUnits ? $"{acceptedUnits} accepted" : "-")</td><td><a class="bl-btn bl-btn-outline" aria-label="@RequestLinkLabel(item)" href="@($"/requests/{item.Id}")">View request</a></td></tr> }</tbody></table></div>
+        <div class="bl-request-cards" aria-label="Requests">
+            @foreach (var item in requests.Items)
+            {
+                <article class="bl-card bl-request-card"><div class="bl-request-card-heading"><BloodTypeTag Type="item.BloodType" /><span class="bl-status-badge @StatusClass(item.Status.ToString())">@Label(item.Status.ToString())</span></div><dl class="bl-request-card-facts"><div><dt>@(IsReceivedRequestList ? "Requesting facility" : "Source facility")</dt><dd>@(IsReceivedRequestList ? item.RequestingFacilityName : item.SourceFacilityName)</dd></div><div><dt>Units requested</dt><dd>@item.UnitsRequested</dd></div><div><dt>@(item.Status == BloodRequestStatus.Fulfilled ? "Transferred" : "Accepted")</dt><dd>@(item.UnitsAccepted?.ToString() ?? "Not accepted") units</dd></div><div><dt>Response / reason</dt><dd>@(item.Status == BloodRequestStatus.Rejected ? item.ResponseNote ?? "Reason not provided" : item.Status == BloodRequestStatus.Fulfilled ? $"{item.UnitsAccepted ?? 0} units transferred" : item.ResponseNote ?? "-")</dd></div><div><dt>Priority</dt><dd>@Label(item.Priority.ToString())</dd></div><div><dt>Sent</dt><dd>@item.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</dd></div></dl><a class="bl-btn bl-btn-outline" aria-label="@RequestLinkLabel(item)" href="@($"/requests/{item.Id}")">View request</a></article>
+            }
+        </div>
+    }
 }
 else if (Data is Paged<NotificationDto> notifications)
 {
@@ -99,8 +120,12 @@ else if (Data is not null)
     [Parameter] public bool IsFacilityAdmin { get; set; }
     [Parameter] public IReadOnlyList<LowStockDto> LowStock { get; set; } = [];
     [Parameter] public int? RequestSourceAvailable { get; set; }
+    [Parameter] public DateTime? RequestNeededBy { get; set; }
+    [Parameter] public string? RequestNeedNote { get; set; }
+    [Parameter] public bool IsReceivedRequestList { get; set; }
 
     private static string Blood(BloodType type) => type switch { BloodType.APositive => "A+", BloodType.ANegative => "A-", BloodType.BPositive => "B+", BloodType.BNegative => "B-", BloodType.ABPositive => "AB+", BloodType.ABNegative => "AB-", BloodType.OPositive => "O+", _ => "O-" };
+    private string RequestLinkLabel(RequestDto request) => $"View request for {Blood(request.BloodType)}, {request.UnitsRequested} units {(IsReceivedRequestList ? "from" : "at")} {(IsReceivedRequestList ? request.RequestingFacilityName : request.SourceFacilityName)}";
     private static string Label(string value) => System.Text.RegularExpressions.Regex.Replace(value, "(?<=[a-z])([A-Z])", " $1");
     private static string FacilityStatusClass(FacilityStatus status) => status switch { FacilityStatus.Approved => "bl-status-success", FacilityStatus.Suspended or FacilityStatus.Rejected => "bl-status-danger", _ => "bl-status-neutral" };
     private static string FacilityStatusLabel(FacilityStatus status) => status switch { FacilityStatus.Approved => "Active", FacilityStatus.Pending => "Legacy pending", FacilityStatus.Rejected => "Rejected (legacy)", FacilityStatus.Suspended => "Suspended", _ => "Unknown" };
