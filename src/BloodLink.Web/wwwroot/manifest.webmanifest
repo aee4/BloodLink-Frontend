@@ -1,0 +1,16 @@
+{
+  "name": "BloodLink",
+  "short_name": "BloodLink",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf8",
+  "theme_color": "#9b1c31",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

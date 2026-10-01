@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "verify:public": "node verify-public.mjs",
+    "verify:public:local": "node verify-public-local.mjs",
+    "verify:public:production": "node verify-public-production.mjs",
     "verify:authenticated": "powershell -ExecutionPolicy Bypass -File ./verify-authenticated.ps1",
     "verify:service-worker": "node verify-service-worker-cleanup.mjs",
     "verify:notifications": "node verify-notification-toasts.mjs",

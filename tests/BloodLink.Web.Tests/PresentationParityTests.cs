@@ -7,13 +7,13 @@ public sealed class PresentationParityTests
     private static readonly string Root = FindRoot();
 
     [Fact]
-    public void Public_home_restores_original_sections_and_exact_actions()
+    public void Public_home_has_a_truthful_hero_image_and_core_actions()
     {
         var home = Read("src/BloodLink.Web/Pages/Home.razor");
 
-        Assert.Contains("Coordinate blood stock.", home, StringComparison.Ordinal);
-        Assert.Contains("Save lives faster.", home, StringComparison.Ordinal);
-        Assert.Contains("bl-network-canvas", home, StringComparison.Ordinal);
+        Assert.Contains("A clearer way to coordinate", home, StringComparison.Ordinal);
+        Assert.Contains("images/bloodlink-lab.webp", home, StringComparison.Ordinal);
+        Assert.Contains("alt=\"A laboratory professional carefully checking a sealed blood unit and its records\"", home, StringComparison.Ordinal);
         Assert.Contains("id=\"how\"", home, StringComparison.Ordinal);
         Assert.Contains("id=\"features\"", home, StringComparison.Ordinal);
         Assert.Contains("href=\"/facility/register\"", home, StringComparison.Ordinal);
@@ -61,7 +61,33 @@ public sealed class PresentationParityTests
         Assert.Contains("#app { min-height: 100vh; }", css, StringComparison.Ordinal);
         Assert.DoesNotMatch(new Regex(@"(?m)^\s*(?:html|body|#app)\s*\{[^}]*overflow\s*:\s*hidden", RegexOptions.Singleline), css);
         Assert.Contains(".bl-table-wrap { overflow-x: auto;", css, StringComparison.Ordinal);
-        Assert.DoesNotContain(".bl-public-home", css, StringComparison.Ordinal);
+        Assert.Contains(".bl-public-home, .bl-about-page", css, StringComparison.Ordinal);
+        Assert.Contains("@media (prefers-reduced-motion: reduce)", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Public_about_navigation_and_brand_assets_are_available_without_authentication()
+    {
+        var about = Read("src/BloodLink.Web/Pages/About.razor");
+        var header = Read("src/BloodLink.Web/Layout/PublicHeader.razor");
+        var footer = Read("src/BloodLink.Web/Layout/PublicFooter.razor");
+        var document = Read("src/BloodLink.Web/wwwroot/index.html");
+
+        Assert.Contains("@page \"/about\"", about, StringComparison.Ordinal);
+        Assert.Contains("[AllowAnonymous]", about, StringComparison.Ordinal);
+        Assert.Contains("href=\"/about\"", header, StringComparison.Ordinal);
+        Assert.Contains("href=\"/about\"", footer, StringComparison.Ordinal);
+        Assert.Contains("aria-current=\"@Current", header, StringComparison.Ordinal);
+        Assert.Contains("inert=\"@(!_menuOpen)\"", header, StringComparison.Ordinal);
+        Assert.Contains("favicon.svg", document, StringComparison.Ordinal);
+        Assert.Contains("favicon-16.png", document, StringComparison.Ordinal);
+        Assert.Contains("favicon-32.png", document, StringComparison.Ordinal);
+        Assert.Contains("favicon.ico", document, StringComparison.Ordinal);
+        Assert.DoesNotContain("favicon-blazor", document, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("favicon.png", document, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("support@", footer, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Privacy Policy", footer, StringComparison.Ordinal);
+        Assert.DoesNotContain("24/7", Read("src/BloodLink.Web/Pages/Home.razor"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -260,7 +286,7 @@ public sealed class PresentationParityTests
     }
 
     [Fact]
-    public void Production_startup_does_not_register_a_service_worker_or_enable_pwa_items()
+    public void Production_startup_keeps_service_worker_disabled_and_manifest_icons_branded()
     {
         var index = Read("src/BloodLink.Web/wwwroot/index.html");
         var project = Read("src/BloodLink.Web/BloodLink.Web.csproj");
@@ -269,7 +295,9 @@ public sealed class PresentationParityTests
         Assert.Contains("bloodlink-sw-cleanup.js", index, StringComparison.Ordinal);
         Assert.DoesNotContain("navigator.serviceWorker.register", index, StringComparison.Ordinal);
         Assert.DoesNotContain("service-worker.js", index, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("manifest.webmanifest", index, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("manifest.webmanifest", index, StringComparison.OrdinalIgnoreCase);
+        var manifest = Read("src/BloodLink.Web/wwwroot/manifest.webmanifest");
+        Assert.Contains("icon-192.png", manifest, StringComparison.Ordinal);
         Assert.DoesNotContain("<ServiceWorkerAssetsManifest", project, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("service-worker.published.js", project, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("service-worker.js", project, StringComparison.OrdinalIgnoreCase);
@@ -360,7 +388,8 @@ public sealed class PresentationParityTests
         Assert.DoesNotContain("navigator.serviceWorker.register", index, StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(publishRoot, "service-worker.js")), "Release publish output must not contain service-worker.js.");
         Assert.False(File.Exists(Path.Combine(publishRoot, "service-worker.published.js")), "Release publish output must not contain service-worker.published.js.");
-        Assert.False(File.Exists(Path.Combine(publishRoot, "manifest.webmanifest")), "Release publish output must not contain manifest.webmanifest.");
+        Assert.True(File.Exists(Path.Combine(publishRoot, "manifest.webmanifest")), "Release publish output must contain the branded app manifest.");
+        Assert.True(File.Exists(Path.Combine(publishRoot, "favicon.ico")), "Release publish output must contain favicon.ico.");
         Assert.Contains("https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com", File.ReadAllText(Path.Combine(publishRoot, "appsettings.json")), StringComparison.Ordinal);
     }
 

@@ -4,21 +4,19 @@
 @inject NavigationManager Navigation
 
 <PageTitle>Sign in | BloodLink</PageTitle>
+<a class="bl-skip-link" href="#main-content">Skip to main content</a>
+<PublicHeader />
 <main class="bl-auth-page">
     <aside class="bl-auth-aside">
-        <BloodLinkBrand Dark="true" />
+        <PublicBrand Dark="true" />
         <div class="bl-auth-aside-copy">
-            <blockquote>Better coordination for every unit of blood.</blockquote>
-            <p>Facility teams can manage stock, urgent needs and requests from one workspace.</p>
-            <div class="bl-auth-stats" aria-label="Network statistics">
-                <div><strong>47</strong><span>Facilities</span></div><div><strong>8</strong><span>Blood Types</span></div><div><strong>24/7</strong><span>Network</span></div>
-            </div>
+            <blockquote>Clear information supports better coordination.</blockquote>
+            <p>Sign in to manage facility inventory, review requests, and coordinate with authorised teams.</p>
         </div>
         <p class="bl-auth-copyright">BloodLink operations</p>
     </aside>
-    <section class="bl-auth-content" aria-labelledby="login-title">
+    <section id="main-content" class="bl-auth-content" aria-labelledby="login-title">
         <div class="bl-auth-panel">
-            <div class="bl-auth-mobile-brand"><BloodLinkBrand /></div>
             <div class="bl-auth-heading"><h1 id="login-title">Sign in</h1><p>Access your facility's BloodLink workspace.</p></div>
             <Feedback Message="@Message" Variant="@Variant" />
             <form class="bl-auth-form" @onsubmit="Submit" @onsubmit:preventDefault>
@@ -26,13 +24,14 @@
                 <label class="bl-field"><span class="bl-label">Password</span><input class="bl-input" type="password" autocomplete="current-password" required @bind="Password" /></label>
                 <button class="bl-btn bl-btn-primary bl-btn-block" type="submit" disabled="@Busy">@(Busy ? "Signing in…" : "Sign In")</button>
             </form>
-            <p>Password recovery is currently unavailable. Contact your facility administrator.</p>
+            <p class="bl-password-help">Need help accessing your account? Contact your facility administrator.</p>
             <div class="bl-security-note"><AppIcon Name="shield" Size="14" /> Secure facility access</div>
             <a class="bl-auth-home-link" href="/facility/register">Register a facility</a>
             <a class="bl-auth-home-link" href="/">Return to home</a>
         </div>
     </section>
 </main>
+<PublicFooter />
 
 @code {
     [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }

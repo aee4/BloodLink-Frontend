@@ -3,115 +3,78 @@
 @inject SessionStore Session
 @inject NavigationManager Navigation
 
-<PageTitle>BloodLink | Coordinating Ghana's Blood Supply</PageTitle>
-
+<PageTitle>BloodLink | Blood supply coordination</PageTitle>
 <a class="bl-skip-link" href="#main-content">Skip to main content</a>
 <PublicHeader />
 
-<main id="main-content">
+<main id="main-content" class="bl-public-home">
     <section class="bl-hero" aria-labelledby="hero-title">
         <div class="bl-container bl-hero-grid">
             <div class="bl-hero-content">
-                <span class="bl-eyebrow"><span></span>Connecting blood banks across Ghana</span>
-                <h1 id="hero-title" class="bl-display">Coordinate blood stock.<br /><span>Save lives faster.</span></h1>
-                <p class="bl-hero-copy">A shared platform for hospitals and blood banks to manage inventory, request blood, and respond to emergencies — together.</p>
+                <span class="bl-eyebrow"><span aria-hidden="true"></span>Facility blood supply coordination</span>
+                <h1 id="hero-title" class="bl-display">A clearer way to coordinate <span>blood supply.</span></h1>
+                <p class="bl-hero-copy">BloodLink gives facility teams a shared place to track inventory, coordinate requests, and respond to changing needs.</p>
                 <div class="bl-action-row">
-                    <a class="bl-btn bl-btn-danger bl-btn-lg" href="/facility/register">Register Your Facility <span aria-hidden="true">→</span></a>
-                    <a class="bl-btn bl-btn-outline bl-btn-lg" href="/account/login">Log In</a>
+                    <a class="bl-btn bl-btn-danger bl-btn-lg" href="/facility/register">Register your facility <span aria-hidden="true">→</span></a>
+                    <a class="bl-btn bl-btn-outline bl-btn-lg" href="/account/login">Facility sign in</a>
                 </div>
+                <p class="bl-hero-note"><AppIcon Name="shield" Size="16" /> Designed for healthcare facility teams</p>
             </div>
+            <figure class="bl-hero-visual">
+                <img src="images/bloodlink-lab.webp" width="1200" height="800" fetchpriority="high" alt="A laboratory professional carefully checking a sealed blood unit and its records" />
+                <figcaption><span class="bl-visual-mark"><AppIcon Name="droplet" Size="18" Filled="true" /></span><span><strong>Careful handling. Clear coordination.</strong><small>Tools for the people managing blood supply.</small></span></figcaption>
+            </figure>
+        </div>
+    </section>
 
-            <div class="bl-network-panel">
-                <div class="bl-network-canvas" role="img" aria-label="Five hospitals and blood banks connected through the BloodLink network">
-                    <svg class="bl-network-lines" viewBox="0 0 500 350" preserveAspectRatio="none" aria-hidden="true">
-                        <line x1="250" y1="175" x2="110" y2="72" /><line x1="250" y1="175" x2="390" y2="67" />
-                        <line x1="250" y1="175" x2="72" y2="237" /><line x1="250" y1="175" x2="425" y2="226" />
-                        <line x1="250" y1="175" x2="255" y2="306" />
-                    </svg>
-                    <div class="bl-network-hub" aria-hidden="true"><AppIcon Name="droplet" Size="33" Filled="true" /></div>
-                    <div class="bl-facility-node bl-node-one"><span><AppIcon Name="building" Size="18" /></span><small>Hospital</small></div>
-                    <div class="bl-facility-node bl-node-two"><span><AppIcon Name="building" Size="18" /></span><small>Blood Bank</small></div>
-                    <div class="bl-facility-node bl-node-three"><span><AppIcon Name="building" Size="18" /></span><small>Hospital</small></div>
-                    <div class="bl-facility-node bl-node-four"><span><AppIcon Name="building" Size="18" /></span><small>Blood Bank</small></div>
-                    <div class="bl-facility-node bl-node-five"><span><AppIcon Name="building" Size="18" /></span><small>Hospital</small></div>
-                </div>
-                <div class="bl-network-stats" role="group" aria-label="Network statistics">
-                    <div><strong>47</strong><span>Facilities</span></div>
-                    <div><strong>8</strong><span>Blood Types</span></div>
-                    <div><strong>24/7</strong><span>Network</span></div>
-                </div>
+    <section id="features" class="bl-section bl-features" aria-labelledby="features-title">
+        <div class="bl-container">
+            <div class="bl-section-heading">
+                <span>One shared workspace</span>
+                <h2 id="features-title">The details teams need, in one place.</h2>
+                <p>Give authorised facility staff a consistent view of stock and requests so they can coordinate with greater clarity.</p>
+            </div>
+            <div class="bl-feature-grid">
+                @foreach (var feature in Features)
+                {
+                    <article class="bl-feature-card"><span class="bl-card-icon"><AppIcon Name="@feature.Icon" Size="22" /></span><div><h3>@feature.Title</h3><p>@feature.Description</p></div></article>
+                }
             </div>
         </div>
     </section>
 
     <section id="how" class="bl-section bl-how" aria-labelledby="how-title">
         <div class="bl-container">
-            <div class="bl-section-heading">
-                <span>How It Works</span>
-                <h2 id="how-title">One connected network.<br />Three simple steps.</h2>
-                <p>BloodLink helps facilities coordinate supply and respond to urgent needs without the delays of phone calls and spreadsheets.</p>
-            </div>
-            <div class="bl-how-grid">
+            <div class="bl-section-heading"><span>How it works</span><h2 id="how-title">A practical flow for facility teams.</h2><p>BloodLink brings routine inventory work and facility-to-facility coordination into a single workflow.</p></div>
+            <ol class="bl-how-grid">
                 @foreach (var step in Steps)
                 {
-                    <article class="bl-how-card">
-                        <div class="bl-how-number">@step.Number</div>
-                        <span class="bl-card-icon"><AppIcon Name="@step.Icon" Size="23" /></span>
-                        <h3>@step.Title</h3>
-                        <p>@step.Description</p>
-                    </article>
+                    <li class="bl-how-card"><div class="bl-how-number">@step.Number</div><span class="bl-card-icon"><AppIcon Name="@step.Icon" Size="23" /></span><h3>@step.Title</h3><p>@step.Description</p></li>
                 }
-            </div>
+            </ol>
         </div>
     </section>
 
-    <section id="features" class="bl-section bl-features" aria-labelledby="features-title">
-        <div class="bl-container">
-            <div class="bl-section-heading bl-section-heading-left">
-                <span>Built for Coordination</span>
-                <h2 id="features-title">Everything your facility needs<br />to manage blood supply.</h2>
-            </div>
-            <div class="bl-feature-grid">
-                @foreach (var feature in Features)
-                {
-                    <article class="bl-feature-card">
-                        <span class="bl-card-icon"><AppIcon Name="@feature.Icon" Size="22" /></span>
-                        <div><h3>@feature.Title</h3><p>@feature.Description</p></div>
-                    </article>
-                }
-            </div>
-        </div>
-    </section>
-
-    <section id="about" class="bl-cta-section" aria-labelledby="cta-title">
-        <div class="bl-container bl-cta-inner">
-            <div>
-                <h2 id="cta-title">Ready to connect your facility?</h2>
-                <p>Join the network helping Ghana's hospitals and blood banks coordinate blood supply more effectively.</p>
-            </div>
-            <a class="bl-btn bl-btn-light bl-btn-lg" href="/facility/register">Register Your Facility <span aria-hidden="true">→</span></a>
-        </div>
+    <section class="bl-cta-section" aria-labelledby="cta-title">
+        <div class="bl-container bl-cta-inner"><div><span class="bl-cta-kicker">Built for healthcare teams</span><h2 id="cta-title">Bring your facility into the conversation.</h2><p>Create a facility workspace or sign in to continue coordinating.</p></div><div class="bl-action-row"><a class="bl-btn bl-btn-light bl-btn-lg" href="/facility/register">Register facility</a><a class="bl-btn bl-btn-ghost-light bl-btn-lg" href="/account/login">Sign in</a></div></div>
     </section>
 </main>
-
 <PublicFooter />
 
 @code {
     private static readonly StepItem[] Steps =
     [
-        new("01", "building", "Register your facility", "Your facility and initial administrator are activated immediately. Sign in right away; a System Administrator can suspend access later if needed."),
-        new("02", "package", "Manage your inventory", "Keep blood stock levels current and visible to authorised facilities across the network."),
-        new("03", "network", "Coordinate requests", "Find available blood, send requests, and respond quickly when every minute matters.")
+        new("01", "building", "Set up your facility", "Your facility and initial administrator are activated immediately. Sign in right away; a System Administrator can suspend access later if needed."),
+        new("02", "package", "Keep stock current", "Record inventory by blood type, quantity, and expiry date."),
+        new("03", "network", "Coordinate a need", "Review availability and manage requests with other authorised facilities.")
     ];
 
     private static readonly FeatureItem[] Features =
     [
-        new("package", "Real-time inventory", "Track blood stock by type, quantity, and expiry date from one clear dashboard."),
-        new("network", "Connected facility network", "See availability across active hospitals and blood banks in your region."),
-        new("shield", "Secure access", "Role-based access keeps sensitive facility data protected and accountable."),
-        new("bell", "Urgent request alerts", "Notify the right facilities quickly when an emergency request is raised."),
-        new("file-text", "Clear audit trail", "Maintain a dependable record of inventory changes, requests, and responses."),
-        new("zap", "Faster coordination", "Replace fragmented calls and spreadsheets with a shared source of truth.")
+        new("package", "Inventory visibility", "Track stock by type, quantity, and expiry date in the facility workspace."),
+        new("network", "Facility coordination", "Coordinate blood requests and responses with facilities using BloodLink."),
+        new("shield", "Role-based access", "Give staff access based on their responsibilities within the facility."),
+        new("file-text", "Activity history", "Review records of inventory changes and request activity.")
     ];
 
     private sealed record StepItem(string Number, string Icon, string Title, string Description);

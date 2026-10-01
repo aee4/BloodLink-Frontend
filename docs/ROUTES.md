@@ -3,6 +3,7 @@
 | Route | Access / purpose |
 |---|---|
 | `/` | Public home |
+| `/about` | Public product and mission information |
 | `/account/login` | Public sign-in |
 | `/facilities/register` | Public registration; `/facility/register` is retained as an alias |
 | `/account/manage` | Signed-in account information |

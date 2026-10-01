@@ -5,7 +5,9 @@
 @inject IJSRuntime JS
 
 <PageTitle>Register your facility | BloodLink</PageTitle>
-<main class="bl-form-page">
+<a class="bl-skip-link" href="#main-content">Skip to main content</a>
+<PublicHeader />
+<main id="main-content" class="bl-form-page">
     <div class="bl-form-page-inner">
         <a class="bl-back-link" href="/"><AppIcon Name="arrow-right" Size="14" Class="bl-back-arrow" /> Back to BloodLink</a>
         <section class="bl-form-card" aria-labelledby="register-title">
@@ -21,7 +23,6 @@
             else
             {
                 <div class="bl-form-card-heading">
-                    <span class="bl-form-logo"><AppIcon Name="droplet" Size="21" Filled="true" /></span>
                     <h1 id="register-title">Register your facility</h1>
                     <p>Join the BloodLink network and create your facility workspace.</p>
                 </div>
@@ -61,6 +62,7 @@
         </section>
     </div>
 </main>
+<PublicFooter />
 
 @code {
     private FacilityRegistrationForm Form { get; set; } = new();
