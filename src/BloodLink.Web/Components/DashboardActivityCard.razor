@@ -2,27 +2,30 @@
 
 <section class="bl-card">
     <div class="bl-card-head"><h2>Recent activity</h2></div>
-    @if (Items.Count == 0)
+    @if (RecentItems.Count == 0)
     {
         <div class="bl-card-inline"><p class="bl-muted">No recent activity.</p></div>
     }
     else
     {
         <div class="bl-list">
-            @foreach (var item in Items)
+            @foreach (var item in RecentItems)
             {
                 <div class="bl-dash-row">
                     <span class="bl-stat-icon" aria-hidden="true"><AppIcon Name="activity" Size="16" /></span>
-                    <span class="bl-dash-row-main"><strong>@Text(item, "action")</strong><small>@Text(item, "summary")</small></span>
-                    <time class="bl-dash-time" datetime="@Text(item, "createdAtUtc")">@Text(item, "createdAtUtc")</time>
+                    <span class="bl-dash-row-main"><strong>@DashboardActivityPresentation.DisplayAction(item)</strong><small>@Text(item, "summary")</small></span>
+                    <time class="bl-dash-time" datetime="@DashboardActivityPresentation.MachineTimestamp(item)">@DashboardActivityPresentation.FormatTimestamp(item)</time>
                 </div>
             }
         </div>
     }
+    <div class="bl-card-foot"><NavLink class="bl-link" aria-label="View all activity" href="/activity">View all activity</NavLink></div>
 </section>
 
 @code {
     [Parameter] public List<JsonElement> Items { get; set; } = [];
+
+    private IReadOnlyList<JsonElement> RecentItems => DashboardActivityPresentation.LatestFive(Items);
 
     private static string Text(JsonElement item, string name) => item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value)
         ? value.ToString()

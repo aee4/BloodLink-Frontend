@@ -114,4 +114,6 @@ public sealed class NotificationApiClient(HttpClient http) : BackendApiClient(ht
 public sealed class DashboardApiClient(HttpClient http) : BackendApiClient(http)
 {
     public Task<System.Text.Json.JsonElement> GetDashboard(CancellationToken ct = default) => Get<System.Text.Json.JsonElement>("api/v1/dashboard", ct);
+    public Task<Paged<DashboardActivityDto>> Activity(int page = 1, int pageSize = 25, CancellationToken ct = default) =>
+        Get<Paged<DashboardActivityDto>>($"api/v1/activity?page={page}&pageSize={pageSize}", ct);
 }

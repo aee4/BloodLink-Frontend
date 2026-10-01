@@ -6,7 +6,8 @@
     "verify:public": "node verify-public.mjs",
     "verify:authenticated": "powershell -ExecutionPolicy Bypass -File ./verify-authenticated.ps1",
     "verify:service-worker": "node verify-service-worker-cleanup.mjs",
-    "verify:notifications": "node verify-notification-toasts.mjs"
+    "verify:notifications": "node verify-notification-toasts.mjs",
+    "verify:activity": "node verify-activity-history.mjs"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

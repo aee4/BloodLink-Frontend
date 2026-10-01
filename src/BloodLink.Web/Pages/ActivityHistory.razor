@@ -1,0 +1,90 @@
+@page "/activity"
+@attribute [Authorize]
+@implements IDisposable
+@inject DashboardApiClient ActivityApi
+@inject NavigationManager Navigation
+@inject SessionStore Session
+
+@if (_authorized)
+{
+    <PageTitle>Activity | BloodLink</PageTitle>
+    <div class="bl-workspace-page bl-activity-page">
+        <header class="bl-page-header">
+            <div><p class="bl-eyebrow">BloodLink workspace</p><h1>Activity</h1></div>
+            <a class="bl-btn bl-btn-outline" href="/dashboard">Dashboard</a>
+        </header>
+
+        @if (_state.IsLoading)
+        {
+            <div class="bl-card bl-loading-state" role="status"><span class="bl-loading-dot"></span>Loading activity…</div>
+        }
+        else if (_state.ErrorMessage is not null)
+        {
+            <div class="bl-alert bl-alert-danger" role="alert">@_state.ErrorMessage</div>
+            <button class="bl-btn bl-btn-outline" type="button" @onclick="RetryPage">Try again</button>
+        }
+        else if (_state.Result is { Items.Count: 0 })
+        {
+            <section class="bl-card bl-activity-empty"><h2>No activity yet</h2><p>Activity will appear here as your BloodLink workspace is used.</p></section>
+        }
+        else if (_state.Result is { } result)
+        {
+            <ol class="bl-card bl-activity-list" aria-label="Activity history">
+                @foreach (var item in result.Items)
+                {
+                    <li class="bl-activity-item">
+                        <article>
+                            <div class="bl-activity-heading"><h2>@DashboardActivityPresentation.DisplayAction(item.Action)</h2><time datetime="@DashboardActivityPresentation.MachineTimestamp(item.CreatedAtUtc)">@DashboardActivityPresentation.FormatTimestamp(item.CreatedAtUtc)</time></div>
+                            <p>@item.Summary</p>
+                        </article>
+                    </li>
+                }
+            </ol>
+        }
+
+        @if (!_state.IsLoading && _state.ErrorMessage is null && _state.Result is not null)
+        {
+            <nav class="bl-activity-pagination" aria-label="Activity pages">
+                <button class="bl-btn bl-btn-outline" type="button" aria-label="Previous page" disabled="@(!_state.CanGoPrevious)" @onclick="PreviousPage">Previous</button>
+                <span aria-live="polite">Page @_state.PageNumber</span>
+                <button class="bl-btn bl-btn-outline" type="button" aria-label="Next page" disabled="@(!_state.CanGoNext)" @onclick="NextPage">Next</button>
+            </nav>
+        }
+    </div>
+}
+
+@code {
+    private ActivityHistoryState _state = default!;
+    private CancellationTokenSource? _loadCancellation;
+    private bool _authorized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.User?.Roles.Any(role => role is "SystemAdmin" or "FacilityAdmin") != true)
+        {
+            Navigation.NavigateTo("/access-denied", replace: true);
+            return;
+        }
+
+        _authorized = true;
+        _state = new ActivityHistoryState(ActivityApi);
+        _loadCancellation = new CancellationTokenSource();
+        await _state.LoadPageAsync(1, _loadCancellation.Token);
+    }
+
+    private Task PreviousPage() => _state.CanGoPrevious
+        ? _state.LoadPageAsync(_state.PageNumber - 1, _loadCancellation?.Token ?? CancellationToken.None)
+        : Task.CompletedTask;
+
+    private Task NextPage() => _state.CanGoNext
+        ? _state.LoadPageAsync(_state.PageNumber + 1, _loadCancellation?.Token ?? CancellationToken.None)
+        : Task.CompletedTask;
+
+    private Task RetryPage() => _state.LoadPageAsync(_state.PageNumber, _loadCancellation?.Token ?? CancellationToken.None);
+
+    public void Dispose()
+    {
+        _loadCancellation?.Cancel();
+        _loadCancellation?.Dispose();
+    }
+}
