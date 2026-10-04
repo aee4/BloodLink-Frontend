@@ -26,7 +26,7 @@ public sealed record AvailabilityDto(Guid FacilityId, string FacilityName, Facil
     string City, BloodType BloodType, int AvailableUnits, DateTime UpdatedAtUtc);
 public sealed record LowStockDto(BloodType BloodType, int AvailableUnits, int LowStockThreshold, DateTime UpdatedAtUtc);
 public sealed record NeedDto(Guid Id, Guid FacilityId, BloodType BloodType, int UnitsNeeded, UrgencyLevel Urgency,
-    BloodNeedStatus Status, DateTime CreatedAtUtc, string? Note, string? CreatorDisplayName, DateTime? UpdatedAtUtc);
+    BloodNeedStatus Status, DateTime CreatedAtUtc, string? Note, string? CreatorDisplayName, DateTime? UpdatedAtUtc, DateTime? NeededByUtc = null);
 public sealed record NeedDetailDto(Guid Id, Guid FacilityId, string FacilityName, BloodType BloodType, int UnitsNeeded,
     UrgencyLevel Urgency, BloodNeedStatus Status, DateTime NeededByUtc, string? Note, string? DecisionReason,
     string CreatorDisplayName, DateTime CreatedAtUtc, DateTime UpdatedAtUtc, int? InventoryTotalUnits,

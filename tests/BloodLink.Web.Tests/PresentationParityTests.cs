@@ -480,7 +480,7 @@ public sealed class PresentationParityTests
         Assert.Contains("Source facility", records, StringComparison.Ordinal);
         Assert.Contains("Needed by", records, StringComparison.Ordinal);
         Assert.Contains("Request note", records, StringComparison.Ordinal);
-        Assert.Contains("@media (max-width: 900px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (max-width: 768px)", css, StringComparison.Ordinal);
         Assert.Contains("@media (max-width: 479px)", css, StringComparison.Ordinal);
         Assert.Contains(".bl-request-table { display: none; }", css, StringComparison.Ordinal);
         Assert.Contains(".bl-request-cards { display: grid; }", css, StringComparison.Ordinal);
