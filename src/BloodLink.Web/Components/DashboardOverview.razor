@@ -21,11 +21,14 @@ else if (IsFacilityAdmin)
         <DashboardStatCard Label="Requests received" Value="@Value("receivedRequests")" Icon="inbox" />
         <DashboardStatCard Label="Low stock items" Value="@Value("lowStockItems")" Icon="alert-triangle" Accent="true" />
     </div>
-    <div class="bl-stat-grid bl-stat-grid-3">
-        <DashboardStatCard Label="Total inventory units" Value="@Value("totalInventoryUnits")" Icon="package" />
-        <DashboardStatCard Label="Available units" Value="@Value("availableInventoryUnits")" Icon="check" />
-        <DashboardStatCard Label="Unread notifications" Value="@Value("unreadNotifications")" Icon="bell" />
-    </div>
+    <section class="bl-dashboard-inventory" aria-labelledby="dashboard-inventory-title">
+        <div><p class="bl-eyebrow">Facility stock</p><h2 id="dashboard-inventory-title">Inventory overview</h2><p>Keep availability in view before coordinating the next request.</p><a class="bl-link" href="/inventory">View inventory <AppIcon Name="arrow-right" Size="16" /></a></div>
+        <dl class="bl-inventory-summary">
+            <div><dt>Total inventory units</dt><dd>@Value("totalInventoryUnits")</dd></div>
+            <div><dt>Available units</dt><dd>@Value("availableInventoryUnits")</dd></div>
+            <div><dt>Unread notifications</dt><dd>@Value("unreadNotifications")</dd></div>
+        </dl>
+    </section>
     <div class="bl-card-grid bl-card-grid-2">
         <section class="bl-card">
             <div class="bl-card-head"><h2>Needs awaiting review</h2><a class="bl-link" href="/needs">View needs</a></div>

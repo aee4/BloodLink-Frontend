@@ -1,17 +1,5 @@
-:root {
-    --bl-navy: #0f2744;
-    --bl-navy-dark: #081a30;
-    --bl-red: #be1d2c;
-    --bl-red-dark: #a61725;
-    --bl-bg: #f2f5fa;
-    --bl-secondary: #e8edf5;
-    --bl-muted: #6b7a99;
-    --bl-placeholder: #a0aabf;
-    --bl-border: rgba(15, 39, 68, 0.1);
-    --bl-white: #fff;
-    --bl-shadow: 0 18px 50px rgba(15, 39, 68, 0.08);
-    --bl-radius: 0.5rem;
-}
+/* Layout and responsive contracts. Theme tokens live in css/design-tokens.css;
+   the clinical presentation layer lives in css/clinical-ui.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
 html { min-width: 320px; min-height: 100%; scroll-behavior: smooth; }
@@ -79,7 +67,6 @@ h1:focus { outline: none; }
 .bl-display { margin-bottom: 1.4rem; font-size: clamp(2.8rem, 5vw, 4.25rem); font-weight: 800; line-height: 1.08; letter-spacing: -.055em; }
 .bl-display > span { color: var(--bl-red); }
 .bl-hero-copy { max-width: 35rem; margin-bottom: 2rem; color: var(--bl-muted); font-size: 1.08rem; line-height: 1.75; }
-.bl-action-row { display: flex; flex-wrap: wrap; gap: .75rem; }
 .bl-table-pagination { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; margin-top: 1rem; color: var(--bl-muted); font-size: .875rem; }
 .bl-table-pagination .bl-btn { min-width: 6rem; }
 
@@ -580,7 +567,6 @@ a.bl-nav-item.active { color: white; background: rgba(190,29,44,.3); }
 .bl-panel dt { color: var(--bl-muted); }
 .bl-panel dd { overflow-wrap: break-word; }
 .bl-data-section .bl-table-wrap { max-width: 100%; }
-.bl-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .bl-table th, .bl-table td { padding: .7rem .6rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--bl-border); overflow-wrap: break-word; }
 .bl-table th { color: #526078; font-weight: 650; }
 .bl-table td a { color: #9f1d2a; text-decoration: underline; }

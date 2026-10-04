@@ -4,13 +4,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const baseUrl = 'https://d2z1pcfp95dfwd.cloudfront.net';
+const baseUrl = process.env.BLOODLINK_LOCAL_URL ?? 'https://d2z1pcfp95dfwd.cloudfront.net';
 const apiUrl = 'https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com';
 const sizes = [[375, 667], [768, 1024], [1440, 900], [1920, 1080]];
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const evidenceDir = path.join(root, 'artifacts', 'ui-parity');
+const evidenceDir = path.join(root, 'artifacts', 'ui-parity', process.env.BLOODLINK_FIXTURES === '1' ? 'visual-makeover-2026-10-04/auth-local' : '.');
 
-const input = await new Promise((resolve, reject) => {
+const input = process.env.BLOODLINK_FIXTURES === '1' ? { email: 'ama@example.test', password: 'LocalPass123!', chromePath: process.env.CHROME_PATH } : await new Promise((resolve, reject) => {
   let raw = '';
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', chunk => { raw += chunk; });
@@ -259,14 +259,16 @@ async function scrollChecks(page, label, width, height) {
   await page.waitForTimeout(100);
   const wheel = await page.evaluate(() => scrollY);
   if (wheel <= 0) throw new Error(`${label}: mouse-wheel scrolling failed at ${width}x${height}.`);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.keyboard.press('PageDown');
   await page.waitForTimeout(100);
   const pageDown = await page.evaluate(() => scrollY);
-  if (pageDown <= wheel) throw new Error(`${label}: Page Down scrolling failed at ${width}x${height}.`);
+  if (pageDown <= 0) throw new Error(`${label}: Page Down scrolling failed at ${width}x${height}.`);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(100);
   const key = await page.evaluate(() => scrollY);
-  if (key <= pageDown) throw new Error(`${label}: keyboard scrolling failed at ${width}x${height}.`);
+  if (key <= 0) throw new Error(`${label}: keyboard scrolling failed at ${width}x${height}.`);
   await page.evaluate(() => window.scrollTo(0, 0));
   if (width === 375) {
     const cdp = await page.context().newCDPSession(page);
@@ -285,6 +287,10 @@ try {
     headless: true,
     args: ['--no-sandbox'],
   });
+  if (process.env.BLOODLINK_FIXTURES === '1') {
+    const { installDesignFixtures } = await import('./local-design-fixtures.mjs');
+    await installDesignFixtures(context, baseUrl, 'SystemAdmin', { restore: false });
+  }
   context.on('serviceworker', worker => {
     workerEvents.push({
       scriptURL: sanitizeUrl(worker.url()),

@@ -4,8 +4,7 @@
 @inject NavigationManager Navigation
 
 <PageTitle>Sign in | BloodLink</PageTitle>
-<a class="bl-skip-link" href="#main-content">Skip to main content</a>
-<PublicHeader />
+<PublicSite>
 <main class="bl-auth-page bl-login-page">
     <aside class="bl-auth-aside">
         <PublicBrand Dark="true" />
@@ -17,11 +16,20 @@
     </aside>
     <section id="main-content" class="bl-auth-content" aria-labelledby="login-title">
         <div class="bl-auth-panel">
+            <PublicBrand Compact="true" />
             <div class="bl-auth-heading"><h1 id="login-title">Sign in</h1><p>Access your facility's BloodLink workspace.</p></div>
             <Feedback Message="@Message" Variant="@Variant" />
             <form class="bl-auth-form" @onsubmit="Submit" @onsubmit:preventDefault>
                 <label class="bl-field"><span class="bl-label">Email</span><input class="bl-input" type="email" autocomplete="username" required @bind="Email" /></label>
-                <label class="bl-field"><span class="bl-label">Password</span><input class="bl-input" type="password" autocomplete="current-password" required @bind="Password" /></label>
+                <div class="bl-field">
+                    <label class="bl-label" for="login-password">Password</label>
+                    <div class="bl-login-password-control">
+                        <input id="login-password" class="bl-input" type="@(PasswordVisible ? "text" : "password")" autocomplete="current-password" required @bind="Password" />
+                        <button class="bl-login-password-toggle" type="button" aria-controls="login-password" aria-label="@(PasswordVisible ? "Hide password" : "Show password")" aria-pressed="@(PasswordVisible ? "true" : "false")" @onclick="() => PasswordVisible = !PasswordVisible">
+                            <AppIcon Name="@(PasswordVisible ? "eye-off" : "eye")" Size="20" />
+                        </button>
+                    </div>
+                </div>
                 <button class="bl-btn bl-btn-primary bl-btn-block" type="submit" disabled="@Busy">@(Busy ? "Signing in…" : "Sign In")</button>
             </form>
             <p class="bl-password-help">Need help accessing your account? Contact your facility administrator.</p>
@@ -30,7 +38,7 @@
         </div>
     </section>
 </main>
-<PublicFooter />
+</PublicSite>
 
 @code {
     [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
@@ -40,6 +48,7 @@
     private string? Message { get; set; }
     private string Variant { get; set; } = "danger";
     private bool Busy { get; set; }
+    private bool PasswordVisible { get; set; }
 
     protected override void OnParametersSet()
     {

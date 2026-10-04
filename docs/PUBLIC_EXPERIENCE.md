@@ -1,5 +1,7 @@
 # Public experience audit and redesign
 
+This is the historical initial public redesign audit. The current local second pass replaces the compositions and shared-photo strategy described below. See [the structural public review](STRUCTURAL-PUBLIC-REDESIGN-2026-10-04.md) for the dedicated routes, unique visuals, wide shell and fixed light public theme.
+
 This note covers the routes reachable without signing in. Protected workspace pages and the authenticated sidebar are outside the redesign scope.
 
 ## Route audit

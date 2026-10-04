@@ -4,7 +4,7 @@
     <div class="bl-card-head"><h2>Recent activity</h2></div>
     @if (RecentItems.Count == 0)
     {
-        <div class="bl-card-inline"><p class="bl-muted">No recent activity.</p></div>
+        <DashboardEmptyState Title="No recent activity." Description="Operational updates will appear as your team uses BloodLink." Icon="history" />
     }
     else
     {

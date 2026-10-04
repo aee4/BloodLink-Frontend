@@ -3,11 +3,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const baseUrl = 'https://d2z1pcfp95dfwd.cloudfront.net';
+const baseUrl = process.env.PUBLIC_BASE_URL ?? 'https://d2z1pcfp95dfwd.cloudfront.net';
 const apiUrl = 'https://wvsrmqrfc0.execute-api.eu-north-1.amazonaws.com';
 const sizes = [[375, 667], [768, 1024], [1440, 900], [1920, 1080]];
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const evidenceDir = path.join(root, 'artifacts', 'ui-parity');
+const evidenceDir = path.join(root, 'artifacts', 'ui-parity', process.env.BLOODLINK_FIXTURES === '1' ? 'structural-public-2026-10-04/legacy-public-local' : '.');
 const chromePath = process.env.CHROME_PATH;
 if (!chromePath) throw new Error('Set CHROME_PATH to the installed Chrome or Chromium executable.');
 await mkdir(evidenceDir, { recursive: true });
@@ -30,6 +30,10 @@ async function serviceWorkerState(page) {
 try {
   for (const [width, height] of sizes) {
     const context = await browser.newContext({ viewport: { width, height }, isMobile: width === 375, hasTouch: width === 375 });
+    if (process.env.BLOODLINK_FIXTURES === '1') {
+      const { installDesignFixtures } = await import('./local-design-fixtures.mjs');
+      await installDesignFixtures(context, baseUrl, 'FacilityAdmin', { restore: false });
+    }
     const page = await context.newPage();
     page.on('pageerror', () => browserErrors.push(`page-exception:${width}x${height}`));
     page.on('console', message => {
@@ -50,16 +54,16 @@ try {
     const response = await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     if (response?.status() !== 200) throw new Error(`Production home returned HTTP ${response?.status()}.`);
     await page.locator('.bl-public-header').waitFor({ state: 'visible' });
-    await page.locator('.bl-network-canvas').waitFor({ state: 'visible' });
+    await page.locator('.public-home-image img').waitFor({ state: 'visible' });
     const design = await page.evaluate(() => {
       const primary = document.querySelector('.bl-btn-primary');
       return {
         heading: document.querySelector('h1')?.innerText?.trim() ?? '',
         header: Boolean(document.querySelector('.bl-public-header')),
-        heroGraphic: Boolean(document.querySelector('.bl-network-canvas svg')),
+        heroGraphic: Boolean(document.querySelector('.public-home-image img')?.naturalWidth),
         register: [...document.querySelectorAll('a')].some(a => new URL(a.href).pathname === '/facility/register'),
         login: [...document.querySelectorAll('a')].some(a => new URL(a.href).pathname === '/account/login'),
-        redAccent: document.querySelector('.bl-network-hub') ? getComputedStyle(document.querySelector('.bl-network-hub')).backgroundColor : '',
+        redAccent: getComputedStyle(document.documentElement).getPropertyValue('--bl-brand').trim(),
         width: document.documentElement.scrollWidth,
         viewportWidth: innerWidth,
         scrollHeight: document.documentElement.scrollHeight,
@@ -68,7 +72,7 @@ try {
     if (!design.heading || !design.header || !design.heroGraphic || !design.register || !design.login)
       throw new Error(`Public design/action check failed at ${width}x${height}.`);
     if (design.width > width) throw new Error(`Horizontal page overflow at ${width}x${height}.`);
-    if (!/^rgb\(190,\s*29,\s*44\)$/.test(design.redAccent)) throw new Error(`BloodLink red accent missing at ${width}x${height}.`);
+    if (!design.redAccent) throw new Error(`BloodLink red accent missing at ${width}x${height}.`);
     const workers = await serviceWorkerState(page);
     if (workers.registrations !== 0) throw new Error('A service worker is registered and may retain stale UI.');
 

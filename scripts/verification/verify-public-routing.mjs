@@ -8,13 +8,13 @@ const baseline = process.env.PUBLIC_BASELINE_URL;
 for (const address of [base, baseline].filter(Boolean)) {
     if (!['localhost', '127.0.0.1'].includes(new URL(address).hostname)) throw new Error('Local verification only.');
 }
-const output = new URL('../../artifacts/ui-parity/public-routing-2026-10-04/', import.meta.url);
+const output = new URL('../../artifacts/ui-parity/structural-public-2026-10-04/routing/', import.meta.url);
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const results = [], visuals = [], errors = [];
 const assert = (ok, message) => { if (!ok) throw new Error(message); };
 const pathOf = page => new URL(page.url()).pathname + new URL(page.url()).hash;
-const routes = ['/', '/about', '/account/login', '/facility/register', '/facilities/register', '/#how-it-works', '/#features', '/#how'];
+const routes = ['/', '/about', '/how-it-works', '/features', '/account/login', '/facility/register', '/facilities/register', '/#how-it-works', '/#features', '/#how'];
 const expectedActive = route => route.startsWith('/#') ? '/' : route === '/facilities/register' ? '/facility/register' : route;
 const ready = async page => {
     await page.locator('.bl-public-header').waitFor();
@@ -83,21 +83,16 @@ try {
         await page.goBack(); await record(page, width, 'A-back-about', '/about');
         await page.goBack(); await record(page, width, 'A-back-home', '/');
         await page.goForward(); await record(page, width, 'A-forward-about', '/about');
-        const historyBefore = await page.evaluate(() => history.length);
-        await primary(page, '/#how-it-works'); await record(page, width, 'cross-route-fragment', '/#how-it-works');
-        assert(await page.evaluate(() => history.length) === historyBefore, 'Fragment scroll added unexpected history entries after replacing forward entry');
-        await page.goBack(); await record(page, width, 'fragment-back-about', '/about');
-        await page.goForward(); await record(page, width, 'fragment-forward-home', '/#how-it-works');
-        await primary(page, '/'); await record(page, width, 'B-home', '/');
-        const historyHome = await page.evaluate(() => history.length);
-        await primary(page, '/#how-it-works', true); await record(page, width, 'B-same-home-fragment', '/#how-it-works');
-        assert(await page.evaluate(() => history.length) === historyHome + 1, 'Same-page fragment should add exactly one entry');
-        await primary(page, '/#how-it-works'); await record(page, width, 'repeat-fragment', '/#how-it-works');
-        assert(await page.evaluate(() => history.length) === historyHome + 1, 'Repeated fragment added history');
+        await primary(page, '/how-it-works'); await record(page, width, 'dedicated-workflow', '/how-it-works');
+        await page.goBack(); await record(page, width, 'workflow-back-about', '/about');
+        await page.goForward(); await record(page, width, 'workflow-forward', '/how-it-works');
+        await primary(page, '/features', true); await record(page, width, 'dedicated-features', '/features');
+        await page.goBack(); await record(page, width, 'features-back-workflow', '/how-it-works');
+        await page.goForward(); await record(page, width, 'features-forward', '/features');
         await page.goto(base + '/account/login'); await ready(page);
         await page.locator('.bl-login-links a[href="/facility/register"]').click(); await record(page, width, 'C-register', '/facility/register');
         await primary(page, '/about'); await record(page, width, 'C-about', '/about');
-        for (const href of ['/about', '/account/login', '/facility/register', '/#features', '/#how-it-works']) {
+        for (const href of ['/about', '/account/login', '/facility/register', '/features', '/how-it-works']) {
             await page.locator(`.bl-footer a[href="${href}"]`).click();
             await record(page, width, 'footer', href);
         }
@@ -117,7 +112,7 @@ try {
         assert(pathOf(popup) === '/' && pathOf(page) === '/about', 'Ctrl-click changed source route');
         await popup.close();
         await page.emulateMedia({ reducedMotion: 'reduce' });
-        await primary(page, '/#how-it-works'); await record(page, width, 'reduced-motion', '/#how-it-works');
+        await primary(page, '/how-it-works'); await record(page, width, 'reduced-motion', '/how-it-works');
         assert(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior) === 'auto', 'Reduced motion not honored');
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         for (const route of ['/', '/about', '/account/login', '/facility/register']) {

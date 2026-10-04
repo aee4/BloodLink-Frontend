@@ -1,0 +1,94 @@
+/* BloodLink clinical UI. Legacy names are aliases for the existing layout sheet. */
+:root {
+    color-scheme: light;
+    --bl-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --bl-bg: #f6f7f9;
+    --bl-surface: #ffffff;
+    --bl-surface-raised: #ffffff;
+    --bl-surface-subtle: #f0f2f5;
+    --bl-border: #e2e5ea;
+    --bl-border-strong: #7e8898;
+    --bl-text: #202630;
+    --bl-text-muted: #596373;
+    --bl-text-subtle: #687384;
+    --bl-brand: #a91f38;
+    --bl-brand-hover: #8e182e;
+    --bl-brand-soft: #fbeef1;
+    --bl-success: #176344;
+    --bl-success-soft: #eaf6ef;
+    --bl-warning: #805311;
+    --bl-warning-soft: #fff4df;
+    --bl-danger: #ae2630;
+    --bl-danger-hover: #912029;
+    --bl-danger-soft: #ffedef;
+    --bl-info: #245a91;
+    --bl-info-soft: #edf4fc;
+    --bl-focus: #4269a6;
+    --bl-focus-ring: 0 0 0 3px #4269a62b;
+    --bl-radius-sm: .375rem;
+    --bl-radius-md: .625rem;
+    --bl-radius-lg: .875rem;
+    --bl-shadow-sm: 0 2px 6px #20263006;
+    --bl-shadow-md: 0 12px 32px #20263012;
+    --bl-shadow-dialog: 0 24px 64px #11182730;
+    --bl-overlay: #11182780;
+    --bl-inverse-surface: #252e3b;
+    --bl-inverse-text: #f7f8fa;
+    --bl-inverse-muted: #c0c8d4;
+    --bl-space-1: .25rem;
+    --bl-space-2: .5rem;
+    --bl-space-3: .75rem;
+    --bl-space-4: 1rem;
+    --bl-space-5: 1.25rem;
+    --bl-space-6: 1.5rem;
+    --bl-space-8: 2rem;
+    --bl-space-10: 2.5rem;
+    --bl-space-12: 3rem;
+    --bl-space-16: 4rem;
+    --bl-page-gutter: clamp(1rem, 2.5vw, 2.5rem);
+    --bl-control-height: 2.75rem;
+    --bl-motion: 150ms;
+    --bl-navy: var(--bl-text);
+    --bl-navy-dark: var(--bl-inverse-surface);
+    --bl-red: var(--bl-brand);
+    --bl-red-dark: var(--bl-brand-hover);
+    --bl-secondary: var(--bl-surface-subtle);
+    --bl-muted: var(--bl-text-muted);
+    --bl-placeholder: var(--bl-text-subtle);
+    --bl-white: var(--bl-surface);
+    --bl-radius: var(--bl-radius-sm);
+    --bl-shadow: var(--bl-shadow-md);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+        --bl-bg: #171b23;
+        --bl-surface: #202630;
+        --bl-surface-raised: #282f3b;
+        --bl-surface-subtle: #2b3340;
+        --bl-border: #353e4b;
+        --bl-border-strong: #718096;
+        --bl-text: #edf0f5;
+        --bl-text-muted: #b4bdca;
+        --bl-text-subtle: #a2aebe;
+        --bl-brand: #f08a9e;
+        --bl-brand-hover: #f6a6b6;
+        --bl-brand-soft: #392833;
+        --bl-success: #87d5ac;
+        --bl-success-soft: #24392f;
+        --bl-warning: #efc578;
+        --bl-warning-soft: #3c3325;
+        --bl-danger: #ff9ba3;
+        --bl-danger-hover: #ffb4bb;
+        --bl-danger-soft: #422b33;
+        --bl-info: #94bff5;
+        --bl-info-soft: #28364b;
+        --bl-focus: #94bff5;
+        --bl-focus-ring: 0 0 0 3px #94bff530;
+        --bl-shadow-sm: 0 2px 6px #00000012;
+        --bl-shadow-md: 0 12px 32px #00000024;
+        --bl-overlay: #080c14b3;
+        --bl-inverse-surface: #1d232d;
+    }
+}

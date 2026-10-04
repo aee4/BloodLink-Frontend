@@ -1,24 +1,17 @@
 @page "/about"
 @attribute [AllowAnonymous]
 
-<PageTitle>About BloodLink | Blood supply coordination</PageTitle>
-<a class="bl-skip-link" href="#main-content">Skip to main content</a>
-<PublicHeader />
-<main id="main-content" class="bl-about-page">
-    <section class="bl-about-hero" aria-labelledby="about-title">
-        <div class="bl-container bl-about-hero-grid">
-            <div><span class="bl-eyebrow">About BloodLink</span><h1 id="about-title">A shared workspace for coordinated blood supply.</h1><p>BloodLink helps healthcare facilities organise inventory information and manage requests through one connected platform.</p><a class="bl-btn bl-btn-danger bl-btn-lg" href="/facility/register">Register your facility</a></div>
-            <img src="images/bloodlink-lab.webp" width="1200" height="800" loading="lazy" alt="A laboratory professional checking a sealed blood unit and its records" />
-        </div>
+<PageTitle>About | BloodLink</PageTitle>
+<PublicSite>
+<main id="main-content" class="public-about">
+    <header class="bl-container public-editorial-intro"><span class="public-kicker">Why BloodLink exists</span><h1>Built to make blood coordination clearer.</h1><p class="public-lead">Blood supply depends on people working together. Their information should work together, too.</p></header>
+    <section class="bl-container public-about-story" aria-labelledby="story-title">
+        <figure><img src="images/bloodlink-team.webp" width="1536" height="1024" fetchpriority="high" alt="Three Ghanaian healthcare professionals reviewing inventory records together in a bright hospital administration room" /><figcaption>An illustration of the teamwork behind facility coordination.</figcaption></figure>
+        <div><span class="public-kicker">A shared starting point</span><h2 id="story-title">Coordination starts with the people doing the work.</h2><p>Facility staff maintain stock and record needs. Administrators review those needs and coordinate with other facilities. Each decision needs clear information and a visible next step.</p><p>BloodLink brings that work into a shared facility workspace, connecting inventory, requests and the records that explain what happened.</p></div>
     </section>
-    <section class="bl-section bl-about-sections" aria-label="About BloodLink">
-        <div class="bl-container bl-about-grid">
-            <article><span class="bl-card-icon"><AppIcon Name="package" Size="22" /></span><h2>What BloodLink does</h2><p>It gives authorised facility teams tools to record blood inventory, follow request activity, and coordinate availability with other facilities.</p></article>
-            <article><span class="bl-card-icon"><AppIcon Name="network" Size="22" /></span><h2>Why coordination matters</h2><p>Facility teams need clear, current information to understand supply and respond to changing needs. A shared workflow can make that information easier to manage.</p></article>
-            <article><span class="bl-card-icon"><AppIcon Name="building" Size="22" /></span><h2>How facilities collaborate</h2><p>Facilities maintain their own inventory and use requests to communicate needs and responses within the BloodLink workspace.</p></article>
-            <article><span class="bl-card-icon"><AppIcon Name="activity" Size="22" /></span><h2>Our product mission</h2><p>Make the operational work around blood supply more organised, visible, and straightforward for healthcare teams.</p></article>
-        </div>
-    </section>
-    <section class="bl-cta-section" aria-labelledby="about-cta-title"><div class="bl-container bl-cta-inner"><div><h2 id="about-cta-title">Coordinate from one workspace.</h2><p>Register a facility or sign in to continue.</p></div><div class="bl-action-row"><a class="bl-btn bl-btn-light bl-btn-lg" href="/facility/register">Register facility</a><a class="bl-btn bl-btn-ghost-light bl-btn-lg" href="/account/login">Facility sign in</a></div></div></section>
+    <section class="public-problem" aria-labelledby="problem-title"><div class="bl-container public-story-grid"><div><span class="public-kicker">The coordination gap</span><h2 id="problem-title">Information in pieces.<br />Decisions under pressure.</h2><p>When stock records, conversations and request updates are separate, teams have to reconstruct the whole picture before they can act.</p></div><dl class="public-problem-list"><div><dt>Stock visibility</dt><dd>Knowing a quantity is only useful when the team can also see what is available.</dd></div><div><dt>Manual communication</dt><dd>Separate messages can make the latest request status difficult to follow.</dd></div><div><dt>Delayed coordination</dt><dd>Disconnected information adds work between a need and the next decision.</dd></div><div><dt>Traceability</dt><dd>Teams need a record of changes and handovers after the conversation ends.</dd></div></dl></div></section>
+    <section class="bl-container public-section public-approach" aria-labelledby="approach-title"><span class="public-kicker">The BloodLink approach</span><div><h2 id="approach-title">Connect the work.<br />Keep responsibility clear.</h2><div><p class="public-lead">One workflow, with a role for each member of the team.</p><p>Staff record needs. Facility administrators review, search and coordinate requests. System administrators oversee facility access. Inventory and activity records give that work a shared context.</p><a class="public-text-link" href="/how-it-works">Follow the workflow <AppIcon Name="arrow-right" Size="18" /></a></div></div></section>
+    <section class="public-principles" aria-labelledby="principles-title"><div class="bl-container"><span class="public-kicker">Design principles</span><h2 id="principles-title">What we put first.</h2><div class="public-principle-grid"><article><span>01</span><h3>Clarity</h3><p>Make stock, statuses and next steps easy to understand.</p></article><article><span>02</span><h3>Accountability</h3><p>Keep a visible record of changes and coordination.</p></article><article><span>03</span><h3>Speed</h3><p>Reduce the effort of finding the information a decision needs.</p></article><article><span>04</span><h3>Facility control</h3><p>Keep responsibilities with authorised facility teams.</p></article></div></div></section>
+    <section class="public-final-cta bl-container"><h2>See the shared workflow in action.</h2><a class="bl-btn bl-btn-primary bl-btn-lg" href="/how-it-works">How BloodLink works <AppIcon Name="arrow-right" Size="18" /></a></section>
 </main>
-<PublicFooter />
+</PublicSite>

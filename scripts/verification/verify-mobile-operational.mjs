@@ -8,7 +8,7 @@ const apiOrigin = new URL(config.Api.BaseUrl).origin;
 const output = new URL('../../artifacts/ui-parity/mobile-operational/', import.meta.url);
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const widths = [320, 360, 375, 390, 430, 768, 1440];
+const widths = process.env.BLOODLINK_VIEWPORT_WIDTHS?.split(',').map(Number) ?? [320, 360, 375, 390, 430, 768, 1440];
 const results = [];
 const id = n => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
 const facilityId = id(50);

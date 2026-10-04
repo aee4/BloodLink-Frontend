@@ -34,7 +34,7 @@
 
 <PageTitle>@Title | BloodLink</PageTitle>
 <div class="bl-workspace-page">
-    <header class="bl-page-header"><div><p class="bl-eyebrow">BloodLink workspace · @RoleLabel</p><h1>@Title</h1></div><div class="bl-page-actions"><span class="bl-header-user"><span class="bl-sidebar-avatar">@UserInitials</span><span><strong>@Session.User?.FirstName @Session.User?.LastName</strong><small>@RoleLabel</small></span></span>@if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) { <a class="bl-btn bl-btn-outline" href="/inventory/search"><AppIcon Name="search" Size="14" /> Network search</a><a class="bl-btn bl-btn-primary" href="/inventory/adjust"><AppIcon Name="package" Size="14" /> Adjust inventory</a> } else if (Path == "/inventory") { <a class="bl-btn bl-btn-outline" href="/inventory/history">History</a> } else if (Path == "/facility/staff") { <a class="bl-btn bl-btn-primary" href="/facility/staff/create">Create staff</a> }<button class="bl-icon-button" type="button" title="Refresh" aria-label="Refresh" @onclick="Load"><AppIcon Name="activity" Size="17" /></button></div></header>
+    <header class="bl-page-header"><div><p class="bl-eyebrow">BloodLink workspace · @RoleLabel</p><h1>@Title</h1><p class="bl-page-description">@PageDescription</p></div><div class="bl-page-actions"><span class="bl-header-user"><span class="bl-sidebar-avatar">@UserInitials</span><span><strong>@Session.User?.FirstName @Session.User?.LastName</strong><small>@RoleLabel</small></span></span>@if (Path == "/inventory" && Session.User?.Roles.Contains("FacilityAdmin") == true) { <a class="bl-btn bl-btn-outline" href="/inventory/search"><AppIcon Name="search" Size="14" /> Network search</a><a class="bl-btn bl-btn-primary" href="/inventory/adjust"><AppIcon Name="package" Size="14" /> Adjust inventory</a> } else if (Path == "/inventory") { <a class="bl-btn bl-btn-outline" href="/inventory/history">History</a> } else if (Path == "/facility/staff") { <a class="bl-btn bl-btn-primary" href="/facility/staff/create">Create staff</a> }<button class="bl-icon-button" type="button" title="Refresh" aria-label="Refresh" @onclick="Load"><AppIcon Name="refresh-cw" Size="20" /></button></div></header>
     <Feedback Message="@Message" Variant="@Variant" />
     @if (ApiErrors.Count > 0)
     { <div class="bl-alert bl-alert-danger" role="alert"><ul>@foreach (var error in ApiErrors) { <li>@error.Key: @string.Join(" ", error.Value)</li> }</ul></div> }
@@ -71,7 +71,7 @@
             <label class="bl-field"><span class="bl-label">New password</span><PasswordInputText id="new-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="new-password-hint new-password-error" aria-invalid="@(HasPasswordError(nameof(PasswordForm.NewPassword)) ? "true" : "false")" @bind-Value="PasswordForm.NewPassword" /><InlineValidationMessage TValue="string" For="() => PasswordForm.NewPassword" Id="new-password-error" /></label>
             <div id="new-password-hint" class="bl-fieldset-help bl-field-full"><p>Password must contain:</p><PasswordRequirements Password="@PasswordForm.NewPassword" /></div>
             <label class="bl-field"><span class="bl-label">Confirm new password</span><InputText id="confirm-new-password" class="bl-input" type="password" autocomplete="new-password" aria-describedby="confirm-new-password-error" aria-invalid="@(HasPasswordError(nameof(PasswordForm.ConfirmPassword)) ? "true" : "false")" @bind-Value="PasswordForm.ConfirmPassword" /><InlineValidationMessage TValue="string" For="() => PasswordForm.ConfirmPassword" Id="confirm-new-password-error" /></label>
-            <div class="bl-form-actions bl-field-full"><button class="bl-btn bl-btn-danger" type="submit" disabled="@Busy">Change password</button></div></EditForm></section>
+            <div class="bl-form-actions bl-field-full"><button class="bl-btn bl-btn-primary" type="submit" disabled="@Busy">Change password</button></div></EditForm></section>
     }
     else if (Path == "/facility/profile")
     {
@@ -87,7 +87,7 @@
     }
     else if (Path == "/facility/staff/create")
     {
-        <section class="bl-panel"><EditForm id="staff-creation-form" class="bl-form-grid" EditContext="StaffEditContext" OnValidSubmit="CreateStaff" OnInvalidSubmit="InvalidStaffSubmit" novalidate><DataAnnotationsValidator />
+        <section class="bl-panel"><h2>Staff account details</h2><p class="bl-card-desc">Create workspace access for a colleague at your facility.</p><EditForm id="staff-creation-form" class="bl-form-grid" EditContext="StaffEditContext" OnValidSubmit="CreateStaff" OnInvalidSubmit="InvalidStaffSubmit" novalidate><DataAnnotationsValidator />
             @if (!string.IsNullOrWhiteSpace(Message)) { <div class="bl-validation-summary bl-field-full" role="alert">@Message</div> }
             <label class="bl-field"><span class="bl-label">First name <span>*</span></span><InputText id="staff-first-name" class="bl-input" maxlength="100" aria-describedby="staff-first-name-error" aria-invalid="@(HasStaffError(nameof(StaffForm.FirstName)) ? "true" : "false")" @bind-Value="StaffForm.FirstName" /><InlineValidationMessage TValue="string" For="() => StaffForm.FirstName" Id="staff-first-name-error" /></label>
             <label class="bl-field"><span class="bl-label">Last name <span>*</span></span><InputText id="staff-last-name" class="bl-input" maxlength="100" aria-describedby="staff-last-name-error" aria-invalid="@(HasStaffError(nameof(StaffForm.LastName)) ? "true" : "false")" @bind-Value="StaffForm.LastName" /><InlineValidationMessage TValue="string" For="() => StaffForm.LastName" Id="staff-last-name-error" /></label>
@@ -99,18 +99,18 @@
     }
     else if (Path == "/inventory/adjust")
     {
-        <section class="bl-panel"><form @onsubmit="AdjustInventory" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Change in total units<input type="number" required @bind="UnitsChange" /></label><label>Reason<input required maxlength="500" @bind="Reason" /></label><button class="bl-button bl-button-primary" disabled="@Busy">Adjust inventory</button></form></section>
+        <section class="bl-panel"><h2>Record a stock adjustment</h2><p class="bl-card-desc">Keep your facility inventory current. Include a reason for the adjustment.</p><form @onsubmit="AdjustInventory" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Change in total units<input type="number" required @bind="UnitsChange" /></label><label>Reason<input required maxlength="500" @bind="Reason" /></label><button class="bl-button bl-button-primary" disabled="@Busy">Adjust inventory</button></form></section>
     }
     else if (Path == "/inventory/search")
     {
-        <section class="bl-panel"><form @onsubmit="SearchInventory" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Minimum available<input type="number" min="1" @bind="MinimumAvailable" /></label><button class="bl-button bl-button-primary">Search facilities</button></form></section>
+        <section class="bl-panel"><h2>Search the facility network</h2><p class="bl-card-desc">Find available units by blood type and minimum quantity.</p><form @onsubmit="SearchInventory" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Minimum available<input type="number" min="1" @bind="MinimumAvailable" /></label><button class="bl-button bl-button-primary">Search facilities</button></form></section>
     }
     else if (Path == "/needs/new")
     {
-        <section class="bl-panel"><form @onsubmit="CreateNeed" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Units needed<input type="number" min="1" max="10000" required @bind="NeedUnits" /></label><label>Urgency<InputSelect @bind-Value="SelectedUrgency"><option value="Routine">Routine</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option></InputSelect></label><label>Needed by (your local time)<input id="needed-by" type="datetime-local" required aria-describedby="needed-by-error" @bind="NeededByLocal" @bind:after="ClearDeadlineError" /></label>@if (DeadlineError) { <p id="needed-by-error" class="bl-field-error" role="alert">Needed-by time must be in the future.</p> }<label>Note<textarea maxlength="1000" @bind="Note"></textarea></label><button class="bl-button bl-button-primary" disabled="@Busy">Submit need</button></form></section>
+        <section class="bl-panel"><h2>Blood need details</h2><p class="bl-card-desc">Specify the blood type, quantity, urgency, and time your facility needs stock.</p><form @onsubmit="CreateNeed" @onsubmit:preventDefault><label>Blood type<InputSelect @bind-Value="SelectedBloodType"><option value="APositive">A+</option><option value="ANegative">A-</option><option value="BPositive">B+</option><option value="BNegative">B-</option><option value="ABPositive">AB+</option><option value="ABNegative">AB-</option><option value="OPositive">O+</option><option value="ONegative">O-</option></InputSelect></label><label>Units needed<input type="number" min="1" max="10000" required @bind="NeedUnits" /></label><label>Urgency<InputSelect @bind-Value="SelectedUrgency"><option value="Routine">Routine</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option></InputSelect></label><label>Needed by (your local time)<input id="needed-by" type="datetime-local" required aria-describedby="needed-by-error" @bind="NeededByLocal" @bind:after="ClearDeadlineError" /></label>@if (DeadlineError) { <p id="needed-by-error" class="bl-field-error" role="alert">Needed-by time must be in the future.</p> }<label>Note<textarea maxlength="1000" @bind="Note"></textarea></label><button class="bl-button bl-button-primary" disabled="@Busy">Submit need</button></form></section>
     }
     else if (Path == "/facility/staff")
-    { <a class="bl-button bl-button-primary" href="/facility/staff/create">Create staff</a> }
+    { <p class="bl-card-desc">Manage access for the people working at your facility.</p> }
     else if (Path == "/requests/sent" || Path == "/requests/received")
     {
         @if (Path == "/requests/sent")
@@ -144,7 +144,7 @@
         { <div class="bl-actions"><button class="bl-btn bl-btn-outline" @onclick="MarkAllNotificationsRead">Mark all as read</button></div> }
         @if (Path == "/system/facilities/" + CurrentId)
         {
-            <section class="bl-panel"><div class="bl-actions">@if (Data is FacilityDto approved && approved.Status == FacilityStatus.Approved) { <label>Suspension reason<textarea @bind="Reason"></textarea></label><button class="bl-button bl-button-secondary" @onclick="SuspendFacility">Suspend</button> }@if (Data is FacilityDto suspended && suspended.Status == FacilityStatus.Suspended) { <button class="bl-button bl-button-primary" @onclick="RestoreFacility">Unsuspend</button> }</div></section>
+            <section class="bl-panel"><div class="bl-actions">@if (Data is FacilityDto approved && approved.Status == FacilityStatus.Approved) { <label>Suspension reason<textarea @bind="Reason"></textarea></label><button class="bl-btn bl-btn-danger" @onclick="SuspendFacility">Suspend</button> }@if (Data is FacilityDto suspended && suspended.Status == FacilityStatus.Suspended) { <button class="bl-button bl-button-primary" @onclick="RestoreFacility">Unsuspend</button> }</div></section>
         }
         @if (Path.StartsWith("/needs/") && CurrentId is not null && Path != "/needs/new")
         {
@@ -193,6 +193,26 @@
     private string RoleLabel => Session.User?.Roles.Contains("SystemAdmin") == true ? "System Admin" : Session.User?.Roles.Contains("FacilityAdmin") == true ? "Facility Admin" : "Facility Staff";
     private string UserInitials => $"{(Session.User?.FirstName ?? "B").FirstOrDefault()}{(Session.User?.LastName ?? "L").FirstOrDefault()}".ToUpperInvariant();
     private string Title => Path switch { "/dashboard" => "Dashboard", "/account/manage" => "Account", "/account/change-password" => "Change password", "/facility/profile" => "Facility profile", "/facility/staff" or "/facility/staff/create" => "Staff", "/system/facilities" => "Facility governance", "/inventory/adjust" => "Adjust inventory", "/inventory/history" => "Inventory history", "/inventory/search" => "Find blood availability", "/inventory" => "Inventory", "/needs/new" => "Submit a need", "/needs/mine" => "My needs", "/needs" => "Facility needs", "/requests/sent" => "Requests sent", "/requests/received" => "Requests received", "/notifications" => "Notifications", "/access-denied" => "Access denied", _ when Path.StartsWith("/system/facilities/") => "Facility governance", _ when Path.StartsWith("/needs/") => "Need details", _ when Path.StartsWith("/requests/") => "Request details", _ => "BloodLink" };
+    private string PageDescription => Path switch
+    {
+        "/dashboard" => $"Welcome back, {Session.User?.FirstName}. Here is your workspace at a glance.",
+        "/inventory" => "Current stock, reservations, and availability by blood type.",
+        "/inventory/history" => "Review recorded stock changes and their context.",
+        "/inventory/adjust" => "Record a change to your facility's blood stock.",
+        "/inventory/search" => "Find matching blood stock across the facility network.",
+        "/needs" or "/needs/mine" => "Track blood needs, review progress, and follow decisions.",
+        "/needs/new" => "Submit a blood need for your facility.",
+        "/requests/sent" => "Follow the requests your facility has sent to other teams.",
+        "/requests/received" => "Review incoming requests and coordinate your response.",
+        "/notifications" => "Updates on facility needs, requests, and workspace activity.",
+        "/facility/profile" => "Your facility identity and contact information.",
+        "/facility/staff" or "/facility/staff/create" => "Manage your facility team's workspace access.",
+        "/account/manage" or "/account/change-password" => "Manage your account information and security.",
+        _ when Path.StartsWith("/system/facilities") => "Platform administration: facility access and registration records.",
+        _ when Path.StartsWith("/needs/") => "Review this need, available actions, and status history.",
+        _ when Path.StartsWith("/requests/") => "Review request context, available actions, and handover progress.",
+        _ => "BloodLink facility workspace."
+    };
     private object? Data { get; set; }
     private object? TimelineData { get; set; }
     private IReadOnlyList<LowStockDto> LowStockItems { get; set; } = [];

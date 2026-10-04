@@ -8,7 +8,7 @@
         <article @key="toast.Id" class="bl-toast bl-toast-@toast.Severity.ToString().ToLowerInvariant()"
                  role="status" @onmouseenter="() => Toasts.SetHovered(toast.Id, true)" @onmouseleave="() => Toasts.SetHovered(toast.Id, false)"
                  @onfocusin="() => HandleFocusIn(toast.Id)" @onfocusout="() => HandleFocusOut(toast.Id)">
-            <div class="bl-toast-icon" aria-hidden="true">@Icon(toast.Severity)</div>
+            <div class="bl-toast-icon" aria-hidden="true"><AppIcon Name="@Icon(toast.Severity)" Size="18" /></div>
             <div class="bl-toast-content">
                 <p class="bl-toast-severity">@SeverityLabel(toast.Severity)</p>
                 <h2>@toast.Title</h2>
@@ -18,7 +18,7 @@
                     <button type="button" class="bl-toast-action" @onclick="() => Toasts.Navigate(toast, Navigation)">@toast.ActionLabel</button>
                 }
             </div>
-            <button type="button" class="bl-toast-dismiss" aria-label="Dismiss notification" @onclick="() => Toasts.Dismiss(toast.Id)">x</button>
+            <button type="button" class="bl-toast-dismiss" aria-label="Dismiss notification" @onclick="() => Toasts.Dismiss(toast.Id)"><AppIcon Name="x" Size="18" /></button>
         </article>
     }
 </section>
@@ -59,10 +59,10 @@
 
     private static string Icon(ToastSeverity severity) => severity switch
     {
-        ToastSeverity.Success => "+",
-        ToastSeverity.Warning => "!",
-        ToastSeverity.Error => "!",
-        _ => "i"
+        ToastSeverity.Success => "circle-check",
+        ToastSeverity.Warning => "alert-triangle",
+        ToastSeverity.Error => "alert-triangle",
+        _ => "info"
     };
 
     public void Dispose()

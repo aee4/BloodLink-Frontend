@@ -4,6 +4,8 @@
 |---|---|
 | `/` | Public home |
 | `/about` | Public product and mission information |
+| `/how-it-works` | Public workflow sequence and role responsibilities |
+| `/features` | Public capabilities with actual product previews |
 | `/account/login` | Public sign-in |
 | `/facility/register` | Canonical public registration; `/facilities/register` remains a compatibility alias |
 | `/account/manage` | Signed-in account information |

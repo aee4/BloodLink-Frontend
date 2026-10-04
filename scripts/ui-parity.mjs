@@ -172,8 +172,8 @@ try {
         if (!active.result.value.any) throw new Error(`${role} ${currentPath} has no active navigation item: ${JSON.stringify(active.result.value)}`);
       }
       if (width === 375 && route === '/system/facilities') {
-        const tableScroll = await command('Runtime.evaluate', { expression: `(()=>{const table=document.querySelector('.bl-table-wrap');if(!table)return null;table.scrollLeft=40;return {left:table.scrollLeft,client:table.clientWidth,scroll:table.scrollWidth,body:document.body.scrollWidth,viewport:innerWidth}})()`, returnByValue: true });
-        if (!(tableScroll.result.value?.left > 0 && tableScroll.result.value.body <= tableScroll.result.value.viewport)) throw new Error(`${role}: facility table does not scroll inside its responsive wrapper: ${JSON.stringify({ scroll: tableScroll.result.value, state: value })}`);
+        const cards = await command('Runtime.evaluate', { expression: `(()=>{const row=document.querySelector('.bl-record-table tbody tr');return {display:row?getComputedStyle(row).display:null,labels:[...document.querySelectorAll('.bl-record-table tbody td')].every(cell=>cell.hasAttribute('data-label')),body:document.body.scrollWidth,viewport:innerWidth}})()`, returnByValue: true });
+        if (!(cards.result.value?.display === 'grid' && cards.result.value.labels && cards.result.value.body <= cards.result.value.viewport)) throw new Error(`${role}: facility mobile records failed: ${JSON.stringify(cards.result.value)}`);
       }
       const scroll = await command('Runtime.evaluate', { expression: `(()=>{const max=document.documentElement.scrollHeight-innerHeight;if(max<=0)return {required:false,works:true,max,body:document.body.scrollHeight};scrollTo({top:max,behavior:'instant'});const works=scrollY>0;const result={required:true,works,max,body:document.body.scrollHeight,scrollY};scrollTo({top:0,behavior:'instant'});return result})()`, returnByValue: true });
       if (!scroll.result.value.works) throw new Error(`${role} ${route} does not vertically scroll at ${width}x${height}: ${JSON.stringify(scroll.result.value)}.`);

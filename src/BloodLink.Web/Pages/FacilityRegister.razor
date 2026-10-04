@@ -5,8 +5,7 @@
 @inject IJSRuntime JS
 
 <PageTitle>Register your facility | BloodLink</PageTitle>
-<a class="bl-skip-link" href="#main-content">Skip to main content</a>
-<PublicHeader />
+<PublicSite>
 <main id="main-content" class="bl-form-page">
     <div class="bl-form-page-inner">
         <a class="bl-back-link" href="/"><AppIcon Name="arrow-right" Size="14" Class="bl-back-arrow" /> Back to BloodLink</a>
@@ -25,6 +24,7 @@
                 <div class="bl-form-card-heading">
                     <h1 id="register-title">Register your facility</h1>
                     <p>Join the BloodLink network and create your facility workspace.</p>
+                    <p class="bl-registration-access-note">Your facility and initial administrator are activated immediately after successful registration. Facility access remains subject to system administrator controls.</p>
                 </div>
                 <Feedback Message="@Message" />
                 <EditForm id="facility-registration-form" class="bl-form-grid" EditContext="EditContext" OnValidSubmit="Submit" OnInvalidSubmit="InvalidSubmit" novalidate>
@@ -56,13 +56,13 @@
                             <div id="password-requirements" class="bl-fieldset-help"><p>Password must contain:</p><PasswordRequirements Password="@Form.AdminPassword" /></div>
                         </div>
                     </fieldset>
-                    <div class="bl-form-actions"><button class="bl-btn bl-btn-danger bl-btn-lg" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button></div>
+                    <div class="bl-form-actions"><button class="bl-btn bl-btn-primary bl-btn-lg" type="submit" disabled="@Busy">@(Busy ? "Submitting…" : "Submit registration")</button></div>
                 </EditForm>
             }
         </section>
     </div>
 </main>
-<PublicFooter />
+</PublicSite>
 
 @code {
     private FacilityRegistrationForm Form { get; set; } = new();

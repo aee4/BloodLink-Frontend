@@ -9,7 +9,7 @@ const api = new URL(config.Api.BaseUrl).origin;
 const output = new URL('../../artifacts/ui-parity/login-drawer-polish/', import.meta.url);
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch();
-const widths = [320, 360, 375, 390, 430, 768, 1440];
+const widths = process.env.BLOODLINK_VIEWPORT_WIDTHS?.split(',').map(Number) ?? [320, 360, 375, 390, 430, 768, 1440];
 const results = [];
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const errors = [];
@@ -48,6 +48,8 @@ try {
             await email.focus();
             await login.keyboard.press('Tab');
             assert(await login.locator('input[type=password]').evaluate(e => e === document.activeElement), 'Login field focus order');
+            await login.keyboard.press('Tab');
+            assert(await login.getByRole('button', { name: 'Show password', exact: true }).evaluate(e => e === document.activeElement), 'Password toggle focus order');
             await login.keyboard.press('Tab');
             assert(await login.getByRole('button', { name: 'Sign In', exact: true }).evaluate(e => e === document.activeElement), 'Sign in focus order');
             await login.getByRole('button', { name: 'Sign In', exact: true }).click();

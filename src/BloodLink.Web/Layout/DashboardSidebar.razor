@@ -7,7 +7,7 @@
 
 <aside class="bl-sidebar" data-current-path="@CurrentPath" aria-label="Main navigation" @onkeydown="HandleKeyDown">
     <div class="bl-sidebar-brand">
-        <span class="bl-sidebar-logo" aria-hidden="true"><AppIcon Name="droplet" Size="16" Filled="true" /></span>
+        <span class="bl-sidebar-logo" aria-hidden="true"><AppIcon Name="droplet" Size="20" Filled="true" /></span>
         <div class="bl-sidebar-brand-text"><strong>BloodLink</strong><span class="bl-sidebar-facility">@(FacilityName ?? User?.Email)</span></div>
         <button @ref="_menuToggle" class="bl-sidebar-toggle" type="button" disabled="@Session.IsLogoutInProgress" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")"
                 aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="workspace-navigation" @onclick="ToggleMenu">
@@ -16,38 +16,40 @@
     </div>
     @if (_mobileLayout) { @AccountSection }
     <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" aria-disabled="@Session.IsLogoutInProgress" inert="@Session.IsLogoutInProgress" @onclick="CloseMenu">
-        <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><AppIcon Name="activity" Size="16" /><span>Dashboard</span></NavLink>
+        <p class="bl-nav-group-label">Workspace</p>
+        <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><AppIcon Name="layout-dashboard" Size="20" /><span>Dashboard</span></NavLink>
         @if (IsSystem)
         {
-            <NavLink class="bl-nav-item" href="/system/facilities"><AppIcon Name="building" Size="16" /><span>Facilities</span></NavLink>
+            <NavLink class="bl-nav-item" href="/system/facilities"><AppIcon Name="building" Size="20" /><span>Facilities</span></NavLink>
         }
         @if (!IsSystem)
         {
-            <NavLink class="bl-nav-item" href="/inventory"><AppIcon Name="package" Size="16" /><span>Inventory</span></NavLink>
+            <NavLink class="bl-nav-item" href="/inventory"><AppIcon Name="package" Size="20" /><span>Inventory</span></NavLink>
             <div class="bl-nav-sub">
                 @if (IsAdmin)
                 {
-                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/adjust">Adjust stock</NavLink>
-                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/history">History</NavLink>
-                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/search">Network search</NavLink>
-                    <NavLink class="bl-nav-item" href="/needs">Facility needs</NavLink>
-                    <NavLink class="bl-nav-item" href="/requests/sent">Requests sent</NavLink>
-                    <NavLink class="bl-nav-item" href="/requests/received">Requests received</NavLink>
-                    <NavLink class="bl-nav-item" href="/facility/staff">Staff</NavLink>
-                    <NavLink class="bl-nav-item" href="/facility/profile">Facility profile</NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/adjust"><AppIcon Name="sliders-horizontal" Size="20" /><span>Adjust stock</span></NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/history"><AppIcon Name="history" Size="20" /><span>History</span></NavLink>
+                    <NavLink class="bl-nav-item bl-nav-child" href="/inventory/search"><AppIcon Name="search" Size="20" /><span>Network search</span></NavLink>
+                    <NavLink class="bl-nav-item" href="/needs"><AppIcon Name="droplet" Size="20" /><span>Facility needs</span></NavLink>
+                    <NavLink class="bl-nav-item" href="/requests/sent"><AppIcon Name="send" Size="20" /><span>Requests sent</span></NavLink>
+                    <NavLink class="bl-nav-item" href="/requests/received"><AppIcon Name="inbox" Size="20" /><span>Requests received</span></NavLink>
+                    <NavLink class="bl-nav-item" href="/facility/staff"><AppIcon Name="users" Size="20" /><span>Staff</span></NavLink>
+                    <NavLink class="bl-nav-item" href="/facility/profile"><AppIcon Name="building" Size="20" /><span>Facility profile</span></NavLink>
                 }
                 else
                 {
-                    <NavLink class="bl-nav-item" href="/needs/new">Submit need</NavLink>
-                    <NavLink class="@(IsStaffNeedDetail ? "bl-nav-item active" : "bl-nav-item")" href="/needs/mine">My needs</NavLink>
+                    <NavLink class="bl-nav-item" href="/needs/new"><AppIcon Name="plus" Size="20" /><span>Submit need</span></NavLink>
+                    <NavLink class="@(IsStaffNeedDetail ? "bl-nav-item active" : "bl-nav-item")" href="/needs/mine"><AppIcon Name="clipboard-list" Size="20" /><span>My needs</span></NavLink>
                 }
             </div>
         }
         @if (!IsSystem)
         {
-            <NavLink class="bl-nav-item" href="/notifications"><AppIcon Name="bell" Size="16" /><span>Notifications</span></NavLink>
+            <NavLink class="bl-nav-item" href="/notifications"><AppIcon Name="bell" Size="20" /><span>Notifications</span></NavLink>
         }
-        <NavLink class="@(IsAccountPath ? "bl-nav-item active" : "bl-nav-item")" href="/account/manage"><AppIcon Name="user" Size="16" /><span>Account</span></NavLink>
+        <p class="bl-nav-group-label">Account</p>
+        <NavLink class="@(IsAccountPath ? "bl-nav-item active" : "bl-nav-item")" href="/account/manage"><AppIcon Name="user" Size="20" /><span>Account</span></NavLink>
     </nav>
     @if (!_mobileLayout) { @AccountSection }
 </aside>
@@ -57,7 +59,7 @@
     private RenderFragment AccountSection => @<text>
     <div class="bl-sidebar-user">
         <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
-        <button type="button" class="bl-nav-item bl-nav-signout" disabled="@Session.IsLogoutInProgress" @onclick="SignOut">@(Session.IsLogoutInProgress ? "Signing out..." : "Sign out")</button>
+        <button type="button" class="bl-nav-item bl-nav-signout" disabled="@Session.IsLogoutInProgress" @onclick="SignOut"><AppIcon Name="log-out" Size="20" /><span>@(Session.IsLogoutInProgress ? "Signing out..." : "Sign out")</span></button>
     </div>
     </text>;
     private bool _mobileLayout;

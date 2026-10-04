@@ -1,6 +1,6 @@
 @if (!string.IsNullOrWhiteSpace(Message))
 {
-    <div class="bl-alert bl-alert-@Variant" role="@(Variant == "danger" ? "alert" : "status")">@Message</div>
+    <div class="bl-alert bl-alert-@Variant" role="@(Variant == "danger" ? "alert" : "status")"><AppIcon Name="@(Variant == "danger" ? "alert-triangle" : Variant == "success" ? "circle-check" : "info")" Size="20" /><span>@Message</span></div>
 }
 
 @code {

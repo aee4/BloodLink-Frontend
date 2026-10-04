@@ -6,7 +6,7 @@ const chromePath = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Ap
 const sizes = [[375, 812], [768, 1024], [1440, 1000], [1920, 1080]];
 const routes = [
   ['/', 'A clearer way to coordinate'],
-  ['/about', 'A shared workspace for coordinated blood supply.'],
+  ['/about', 'Built to make blood coordination clearer.'],
   ['/account/login', 'Sign in'],
   ['/facility/register', 'Register your facility'],
 ];
@@ -27,6 +27,7 @@ try {
       const response = await page.goto(`${base}${route}`, { waitUntil: 'networkidle' });
       if (response?.status() !== 200) throw new Error(`${route} returned ${response?.status()} at ${width}px.`);
       await page.getByRole('heading', { level: 1, name: heading, exact: route === '/account/login' || route === '/facility/register' }).first().waitFor({ state: 'visible' });
+      await page.locator('main img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
       const state = await page.evaluate(async () => ({
         width: document.documentElement.scrollWidth,
         viewport: innerWidth,
@@ -52,7 +53,7 @@ try {
       await page.screenshot({ path: path.join(evidence, `${route === '/' ? 'home' : route.slice(1).replaceAll('/', '-')}-${width}.png`), fullPage: route === '/' || route === '/about' });
     }
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    const motion = await page.evaluate(() => getComputedStyle(document.querySelector('.bl-hero-visual') ?? document.body).transitionDuration);
+    const motion = await page.evaluate(() => getComputedStyle(document.querySelector('.bl-public-site .bl-btn')).transitionDuration);
     if (motion !== '1e-05s' && motion !== '0.00001s') throw new Error(`Reduced motion transition not reduced: ${motion}`);
     await context.close();
   }

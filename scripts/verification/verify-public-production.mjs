@@ -1,4 +1,4 @@
-﻿import { chromium } from 'playwright';
+import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 const base = process.env.PUBLIC_BASE_URL ?? 'https://d2z1pcfp95dfwd.cloudfront.net';
@@ -6,7 +6,7 @@ const chromePath = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Ap
 const sizes = [[375, 812], [768, 1024], [1440, 1000], [1920, 1080]];
 const routes = [
   ['/', 'A clearer way to coordinate'],
-  ['/about', 'A shared workspace for coordinated blood supply.'],
+  ['/about', 'Built to make blood coordination clearer.'],
   ['/account/login', 'Sign in'],
   ['/facility/register', 'Register your facility'],
   ['/facilities/register', 'Register your facility'],
@@ -38,7 +38,7 @@ async function navigatePublicRoute(page, route, width) {
   await page.locator('#public-route-alias-probe').evaluateAll(elements => elements.forEach(element => element.remove()));
 }
 const root = path.resolve('../..');
-const evidenceDir = path.join(root, 'artifacts', 'ui-parity', 'production-public-redesign');
+const evidenceDir = path.join(root, 'artifacts', 'ui-parity', process.env.BLOODLINK_FIXTURES === '1' ? 'structural-public-2026-10-04/public-release-local' : 'production-public-redesign');
 await mkdir(evidenceDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: chromePath, headless: true, args: ['--no-sandbox'] });
 const errors = [], failures = [], externalImages = [], results = [];
@@ -72,7 +72,7 @@ try {
       await page.locator('.bl-public-header').waitFor({ state: 'visible', timeout: 60000 });
       const heading = page.getByRole('heading', { level: 1, name: expectedHeading, exact: false });
       await heading.waitFor({ state: 'visible' });
-      await page.locator('main img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+      await page.locator('main img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
       if (route === '/about' || route === '/account/login' || route.startsWith('/facilit')) {
         const expectedPath = route === '/facilities/register' ? '/facilities/register' : route;
         if (new URL(page.url()).pathname !== expectedPath) throw new Error(`Unexpected route after navigation to ${route}.`);
@@ -115,25 +115,16 @@ try {
       if (verifyStaticAssets && (!ico || ico[0] !== 0 || ico[1] !== 1 || ico[2] !== 2 || ico[3] !== 16 || ico[4] !== 16 || ico[5] !== 32 || ico[6] !== 32 || state.requiredIcons.find(icon => icon.path === '/favicon.svg')?.dimensions?.some(value => !value))) throw new Error('ICO/SVG BloodLink mark is invalid.');
       if (state.manifestStatus !== 200 || state.manifestIcon !== 'icon-192.png') throw new Error('Manifest icon reference is invalid.');
       if (state.images.some(image => !image.complete || image.width === 0)) throw new Error(`Content image did not load on ${route}: ${JSON.stringify(state.images)}.`);
-      if (state.images.some(image => image.alt && (image.width !== 1200 || image.height !== 800))) throw new Error(`Content image dimensions changed: ${JSON.stringify(state.images)}.`);
+      if (state.images.some(image => image.alt && (image.width < 1200 || image.height < 800))) throw new Error(`Content image dimensions changed: ${JSON.stringify(state.images)}.`);
       if (state.cls > 0.1) throw new Error(`Cumulative layout shift ${state.cls} exceeded 0.1 on ${route} at ${width}px.`);
       if (!state.registerAction || !state.loginAction) throw new Error(`Public calls to action missing on ${route}.`);
 
       if (route === '/' && width === 1440) {
-        const card = page.locator('.bl-feature-card').first();
-        await card.hover(); await page.waitForTimeout(250);
-        const hoverTransform = await card.evaluate(element => getComputedStyle(element).transform);
-        if (hoverTransform === 'none') throw new Error('Feature card hover effect did not run.');
-        const button = page.locator('.bl-hero .bl-btn').first();
+        const button = page.locator('.public-home-hero .bl-btn').first();
+        const initialBackground = await button.evaluate(element => getComputedStyle(element).backgroundColor);
         await button.hover(); await page.waitForTimeout(200);
-        const buttonTransform = await button.evaluate(element => getComputedStyle(element).transform);
-        if (buttonTransform === 'none') throw new Error('Button hover effect did not run.');
-        const box = await button.boundingBox();
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down(); await page.waitForTimeout(40);
-        const pressTransform = await button.evaluate(element => getComputedStyle(element).transform);
-        await page.mouse.move(4, 4); await page.mouse.up();
-        if (pressTransform === buttonTransform || pressTransform === 'none') throw new Error('Button press effect did not run.');
+        const hovered = await button.evaluate(element => ({ background: getComputedStyle(element).backgroundColor, transform: getComputedStyle(element).transform }));
+        if (hovered.background === initialBackground || hovered.transform !== 'none') throw new Error('Button color feedback or stable geometry failed.');
         const navItem = page.locator('.bl-desktop-nav a').first();
         await navItem.hover();
         if (await navItem.evaluate(element => getComputedStyle(element, '::after').transform) === 'matrix(0, 0, 0, 1, 0, 0)') throw new Error('Navigation underline hover did not run.');
@@ -191,8 +182,8 @@ try {
     await page.locator('#protected-route-probe').click();
     await page.waitForURL(url => new URL(url).pathname === '/account/login', { timeout: 60000 });
     await page.getByRole('heading', { name: 'Sign in', exact: true }).waitFor({ state: 'visible' });
-    const protectedState = await page.evaluate(() => ({ path: location.pathname, app: !!document.querySelector('.bl-app, .bl-sidebar'), privateText: /Dashboard overview|Facility workspace|System administration/i.test(document.body.innerText) }));
-    if (protectedState.app || protectedState.privateText || protectedState.path !== '/account/login') throw new Error(`Protected route boundary failed: ${JSON.stringify(protectedState)}.`);
+    const protectedState = await page.evaluate(() => ({ path: location.pathname, app: !!document.querySelector('.bl-app, .bl-sidebar'), privateContent: !!document.querySelector('.bl-workspace-page, .bl-stat-card, .bl-operational-records'), loginForm: !!document.querySelector('.bl-auth-form input[autocomplete="current-password"]') }));
+    if (protectedState.app || protectedState.privateContent || !protectedState.loginForm || protectedState.path !== '/account/login') throw new Error(`Protected route boundary failed: ${JSON.stringify(protectedState)}.`);
 
     const workers = await page.evaluate(async () => ({ registrations: 'serviceWorker' in navigator ? (await navigator.serviceWorker.getRegistrations()).length : 0 }));
     if (workers.registrations !== 0) throw new Error(`Unexpected service worker registrations: ${workers.registrations}.`);

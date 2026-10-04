@@ -1,5 +1,7 @@
 # Public routing consistency — 2026-10-04
 
+The deployment audit below is historical. The current uncommitted makeover uses dedicated `/how-it-works` and `/features` pages in the header, footer and Home previews. Legacy Home fragments remain compatible. The complete makeover, including the restored Login/Register designs, is deployed; see [the deployment verification](COMPLETE-VISUAL-MAKEOVER-DEPLOYMENT-2026-10-04.md) for current production results and the authenticated verification limitation.
+
 Base commit: `6b51e87ef0014fd09aee0725d07e0f7f09aca0eb`. The fix was deployed to the existing frontend stack on 2026-10-04. This report records verification at the deployment handoff, before Git publication.
 
 ## Audit and final destinations

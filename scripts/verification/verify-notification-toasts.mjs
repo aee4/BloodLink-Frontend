@@ -40,7 +40,7 @@ async function waitFor(predicate, label, timeout = 35000) {
 }
 
 const browser = await chromium.launch({ executablePath: chromePath, headless: true, args: ['--no-sandbox'] });
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: process.env.BLOODLINK_COLOR_SCHEME ?? 'light' });
 const page = await context.newPage();
 page.on('pageerror', error => pageErrors.push(error.name));
 page.on('request', request => {

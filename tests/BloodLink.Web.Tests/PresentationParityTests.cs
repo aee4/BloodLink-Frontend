@@ -21,12 +21,12 @@ public sealed class PresentationParityTests
     }
 
     [Fact]
-    public void Public_home_describes_immediate_facility_activation_without_an_approval_queue()
+    public void Public_registration_describes_immediate_facility_activation_without_an_approval_queue()
     {
-        var home = Read("src/BloodLink.Web/Pages/Home.razor");
+        var home = Read("src/BloodLink.Web/Pages/FacilityRegister.razor");
 
-        Assert.Contains("Your facility and initial administrator are activated immediately.", home, StringComparison.Ordinal);
-        Assert.Contains("Sign in right away; a System Administrator can suspend access later if needed.", home, StringComparison.Ordinal);
+        Assert.Contains("Your facility and initial administrator are activated immediately after successful registration.", home, StringComparison.Ordinal);
+        Assert.Contains("Facility access remains subject to system administrator controls.", home, StringComparison.Ordinal);
         Assert.DoesNotContain("review and approval", home, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("pending approval", home, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("awaiting approval", home, StringComparison.OrdinalIgnoreCase);

@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const baseUrl = 'https://d2z1pcfp95dfwd.cloudfront.net';
+const baseUrl = process.env.PUBLIC_BASE_URL ?? 'https://d2z1pcfp95dfwd.cloudfront.net';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const evidenceDir = path.join(root, 'artifacts', 'ui-parity');
 const chromePath = process.env.CHROME_PATH;

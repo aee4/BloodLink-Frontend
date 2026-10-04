@@ -7,12 +7,12 @@
         <nav class="bl-desktop-nav" aria-label="Primary navigation">
             <a href="/" aria-current="@Current("/")">Home</a>
             <a href="/about" aria-current="@Current("/about")">About</a>
-            <a href="/#how-it-works">How it works</a>
-            <a href="/#features">Features</a>
+            <a href="/how-it-works" aria-current="@Current("/how-it-works")">How it works</a>
+            <a href="/features" aria-current="@Current("/features")">Features</a>
         </nav>
         <div class="bl-header-actions">
             <a class="bl-btn bl-btn-outline bl-header-login" href="/account/login" aria-current="@Current("/account/login")">Log in</a>
-            <a class="bl-btn bl-btn-danger bl-header-register" href="/facility/register" aria-current="@CurrentRegister()">Register facility</a>
+            <a class="bl-btn bl-btn-primary bl-header-register" href="/facility/register" aria-current="@CurrentRegister()">Register facility</a>
             <button @ref="_menuToggle" type="button" class="bl-menu-toggle" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")" aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="public-mobile-menu" @onclick="ToggleMenu">
                 <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="21" />
             </button>
@@ -21,8 +21,8 @@
     <nav id="public-mobile-menu" class="bl-mobile-nav @(_menuOpen ? "is-open" : null)" aria-label="Mobile navigation" aria-hidden="@(_menuOpen ? "false" : "true")" inert="@(!_menuOpen)">
         <a href="/" aria-current="@Current("/")" @onclick="CloseMenu">Home</a>
         <a href="/about" aria-current="@Current("/about")" @onclick="CloseMenu">About</a>
-        <a href="/#how-it-works" @onclick="CloseMenu">How it works</a>
-        <a href="/#features" @onclick="CloseMenu">Features</a>
+        <a href="/how-it-works" aria-current="@Current("/how-it-works")" @onclick="CloseMenu">How it works</a>
+        <a href="/features" aria-current="@Current("/features")" @onclick="CloseMenu">Features</a>
         <a href="/account/login" aria-current="@Current("/account/login")" @onclick="CloseMenu">Facility login</a>
         <a href="/facility/register" aria-current="@CurrentRegister()" @onclick="CloseMenu">Register facility</a>
     </nav>

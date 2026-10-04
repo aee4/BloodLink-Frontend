@@ -10,8 +10,8 @@ public sealed class PublicRoutingTests
     [Theory]
     [InlineData("Home", "/")]
     [InlineData("About", "/about")]
-    [InlineData("How it works", "/#how-it-works")]
-    [InlineData("Features", "/#features")]
+    [InlineData("How it works", "/how-it-works")]
+    [InlineData("Features", "/features")]
     [InlineData("Register facility", "/facility/register")]
     public void Desktop_and_mobile_use_the_same_real_links(string label, string destination)
     {
@@ -25,11 +25,13 @@ public sealed class PublicRoutingTests
     [InlineData("Layout/PublicFooter.razor")]
     [InlineData("Pages/Home.razor")]
     [InlineData("Pages/About.razor")]
+    [InlineData("Pages/HowItWorks.razor")]
+    [InlineData("Pages/Features.razor")]
     [InlineData("Pages/Login.razor")]
     [InlineData("Pages/FacilityRegister.razor")]
     public void Public_links_only_use_canonical_routes_and_intentional_fragments(string file)
     {
-        string[] destinations = ["/", "/about", "/account/login", "/facility/register", "/#features", "/#how-it-works", "#main-content"];
+        string[] destinations = ["/", "/about", "/how-it-works", "/features", "/account/login", "/facility/register", "#main-content"];
         foreach (Match link in Regex.Matches(Read(file), "href=\"([^\"]+)\""))
             Assert.Contains(link.Groups[1].Value, destinations);
         Assert.DoesNotMatch("href=\"[^\"]*#[^\"]*\"[^>]*>About", Read(file));
@@ -57,6 +59,26 @@ public sealed class PublicRoutingTests
         Assert.DoesNotContain("replaceState", script);
         Assert.Contains("scroll-margin-top: 5.5rem", Read("wwwroot/app.css"));
         Assert.Contains("prefers-reduced-motion: reduce", Read("wwwroot/app.css"));
+    }
+
+    [Theory]
+    [InlineData("/how-it-works")]
+    [InlineData("/features")]
+    public void New_public_pages_are_compiled_and_allow_anonymous_access(string route)
+    {
+        var page = typeof(App).Assembly.GetTypes().Single(type => type.GetCustomAttributes(typeof(Microsoft.AspNetCore.Components.RouteAttribute), false)
+            .Cast<Microsoft.AspNetCore.Components.RouteAttribute>().Any(attribute => attribute.Template == route));
+        Assert.Single(page.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), false));
+    }
+
+    [Fact]
+    public void Home_previews_and_footer_link_to_dedicated_pages()
+    {
+        var home = Read("Pages/Home.razor");
+        Assert.Contains("href=\"/how-it-works\">See how BloodLink works", home);
+        Assert.Contains("href=\"/features\">Explore all features", home);
+        Assert.DoesNotContain("href=\"/#", Read("Layout/PublicHeader.razor"));
+        Assert.DoesNotContain("href=\"/#", Read("Layout/PublicFooter.razor"));
     }
 
     private static string FindRoot()
