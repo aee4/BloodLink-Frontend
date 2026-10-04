@@ -5,7 +5,7 @@
 | `/` | Public home |
 | `/about` | Public product and mission information |
 | `/account/login` | Public sign-in |
-| `/facilities/register` | Public registration; `/facility/register` is retained as an alias |
+| `/facility/register` | Canonical public registration; `/facilities/register` remains a compatibility alias |
 | `/account/manage` | Signed-in account information |
 | `/account/change-password` | Signed-in password update |
 | `/dashboard` | Role-specific dashboard |

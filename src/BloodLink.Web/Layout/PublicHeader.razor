@@ -1,4 +1,5 @@
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <header class="bl-public-header" @onkeydown="HandleKeyDown">
     <div class="bl-container bl-header-inner">
@@ -6,13 +7,13 @@
         <nav class="bl-desktop-nav" aria-label="Primary navigation">
             <a href="/" aria-current="@Current("/")">Home</a>
             <a href="/about" aria-current="@Current("/about")">About</a>
-            <a href="/#how">How it works</a>
+            <a href="/#how-it-works">How it works</a>
             <a href="/#features">Features</a>
         </nav>
         <div class="bl-header-actions">
             <a class="bl-btn bl-btn-outline bl-header-login" href="/account/login" aria-current="@Current("/account/login")">Log in</a>
             <a class="bl-btn bl-btn-danger bl-header-register" href="/facility/register" aria-current="@CurrentRegister()">Register facility</a>
-            <button type="button" class="bl-menu-toggle" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")" aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="public-mobile-menu" @onclick="ToggleMenu">
+            <button @ref="_menuToggle" type="button" class="bl-menu-toggle" aria-label="@(_menuOpen ? "Close navigation menu" : "Open navigation menu")" aria-expanded="@(_menuOpen ? "true" : "false")" aria-controls="public-mobile-menu" @onclick="ToggleMenu">
                 <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="21" />
             </button>
         </div>
@@ -20,7 +21,7 @@
     <nav id="public-mobile-menu" class="bl-mobile-nav @(_menuOpen ? "is-open" : null)" aria-label="Mobile navigation" aria-hidden="@(_menuOpen ? "false" : "true")" inert="@(!_menuOpen)">
         <a href="/" aria-current="@Current("/")" @onclick="CloseMenu">Home</a>
         <a href="/about" aria-current="@Current("/about")" @onclick="CloseMenu">About</a>
-        <a href="/#how" @onclick="CloseMenu">How it works</a>
+        <a href="/#how-it-works" @onclick="CloseMenu">How it works</a>
         <a href="/#features" @onclick="CloseMenu">Features</a>
         <a href="/account/login" aria-current="@Current("/account/login")" @onclick="CloseMenu">Facility login</a>
         <a href="/facility/register" aria-current="@CurrentRegister()" @onclick="CloseMenu">Register facility</a>
@@ -29,12 +30,27 @@
 
 @code {
     private bool _menuOpen;
+    private ElementReference _menuToggle;
     private string Current(string path) => new Uri(Navigation.Uri).AbsolutePath == path ? "page" : "false";
     private string CurrentRegister() => new Uri(Navigation.Uri).AbsolutePath is "/facility/register" or "/facilities/register" ? "page" : "false";
     private void ToggleMenu() => _menuOpen = !_menuOpen;
-    private void CloseMenu() => _menuOpen = false;
-    private void HandleKeyDown(KeyboardEventArgs args)
+    private async Task CloseMenu()
     {
-        if (args.Key == "Escape") CloseMenu();
+        _menuOpen = false;
+        await _menuToggle.FocusAsync(preventScroll: true);
     }
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && _menuOpen) await CloseMenu();
+    }
+
+    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(() =>
+    {
+        _menuOpen = false;
+        StateHasChanged();
+    });
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
 }

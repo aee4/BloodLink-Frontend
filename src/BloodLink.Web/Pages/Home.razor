@@ -2,6 +2,7 @@
 @attribute [AllowAnonymous]
 @inject SessionStore Session
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>BloodLink | Blood supply coordination</PageTitle>
 <a class="bl-skip-link" href="#main-content">Skip to main content</a>
@@ -43,7 +44,8 @@
         </div>
     </section>
 
-    <section id="how" class="bl-section bl-how" aria-labelledby="how-title">
+    <section id="how-it-works" class="bl-section bl-how" aria-labelledby="how-title">
+        <span id="how" aria-hidden="true"></span>
         <div class="bl-container">
             <div class="bl-section-heading"><span>How it works</span><h2 id="how-title">A practical flow for facility teams.</h2><p>BloodLink brings routine inventory work and facility-to-facility coordination into a single workflow.</p></div>
             <ol class="bl-how-grid">
@@ -83,5 +85,11 @@
     protected override void OnInitialized()
     {
         if (Session.User is not null) Navigation.NavigateTo("/dashboard");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Session.User is null)
+            await JS.InvokeVoidAsync("bloodLinkPublicNavigation.scrollToFragment");
     }
 }
