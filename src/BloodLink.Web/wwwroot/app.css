@@ -887,3 +887,18 @@ a.bl-nav-item.active { color: white; background: rgba(190,29,44,.3); }
     .bl-table-wrap:has(.bl-record-table) { overflow-x: visible; }
     .bl-workflow-actions .bl-btn { max-width: 100%; white-space: normal; }
 }
+
+/* Login polish is scoped to the collapsed public layout; desktop stays unchanged. */
+@media (max-width: 991.98px) {
+    .bl-login-page { grid-template-columns: minmax(0, 1fr); min-height: auto; }
+    .bl-login-page .bl-auth-content { min-height: 0; align-items: center; padding: clamp(2rem, 6svh, 4rem) 1rem; }
+    .bl-login-page .bl-auth-panel { max-width: 27rem; padding: clamp(1rem, 4vw, 2rem); background: white; border: 1px solid var(--bl-border); border-radius: .7rem; }
+    .bl-login-page .bl-auth-heading { margin-bottom: 1.5rem; }
+    .bl-login-page .bl-auth-heading h1 { margin-bottom: .55rem; }
+    .bl-login-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem 1.5rem; margin-top: 1.25rem; }
+    .bl-login-links .bl-auth-home-link { margin-top: 0; }
+    .bl-sidebar-user { border-bottom: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+    .bl-sidebar-user-text strong { max-width: none; overflow: visible; white-space: normal; overflow-wrap: break-word; }
+    .bl-sidebar-user-row { min-width: 0; flex: 1; }
+    .bl-nav-signout { flex: none; }
+}

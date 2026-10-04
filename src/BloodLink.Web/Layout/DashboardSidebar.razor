@@ -2,7 +2,8 @@
 @inject NavigationManager Navigation
 @inject FacilityApiClient Facilities
 @inject SessionStore Session
-@implements IDisposable
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 
 <aside class="bl-sidebar" data-current-path="@CurrentPath" aria-label="Main navigation" @onkeydown="HandleKeyDown">
     <div class="bl-sidebar-brand">
@@ -13,6 +14,7 @@
             <AppIcon Name="@(_menuOpen ? "x" : "menu")" Size="20" />
         </button>
     </div>
+    @if (_mobileLayout) { @AccountSection }
     <nav id="workspace-navigation" class="bl-sidebar-nav @(_menuOpen ? "is-open" : null)" aria-label="Workspace navigation" aria-disabled="@Session.IsLogoutInProgress" inert="@Session.IsLogoutInProgress" @onclick="CloseMenu">
         <NavLink class="bl-nav-item" href="/dashboard" Match="NavLinkMatch.All"><AppIcon Name="activity" Size="16" /><span>Dashboard</span></NavLink>
         @if (IsSystem)
@@ -47,14 +49,49 @@
         }
         <NavLink class="@(IsAccountPath ? "bl-nav-item active" : "bl-nav-item")" href="/account/manage"><AppIcon Name="user" Size="16" /><span>Account</span></NavLink>
     </nav>
-    <div class="bl-sidebar-user">
-        <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
-        <button type="button" class="bl-nav-item bl-nav-signout" disabled="@Session.IsLogoutInProgress" @onclick="SignOut">@(Session.IsLogoutInProgress ? "Signing out..." : "Sign out")</button>
-    </div>
+    @if (!_mobileLayout) { @AccountSection }
 </aside>
 
 @code {
     [Parameter] public ApiUser? User { get; set; }
+    private RenderFragment AccountSection => @<text>
+    <div class="bl-sidebar-user">
+        <div class="bl-sidebar-user-row"><span class="bl-sidebar-avatar">@Initials</span><div class="bl-sidebar-user-text"><strong>@User?.FirstName @User?.LastName</strong><span>@RoleName</span></div></div>
+        <button type="button" class="bl-nav-item bl-nav-signout" disabled="@Session.IsLogoutInProgress" @onclick="SignOut">@(Session.IsLogoutInProgress ? "Signing out..." : "Sign out")</button>
+    </div>
+    </text>;
+    private bool _mobileLayout;
+    private bool _disposed;
+    private IJSObjectReference? _layoutModule;
+    private IJSObjectReference? _layoutObserver;
+    private DotNetObjectReference<DashboardSidebar>? _layoutReference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var module = await JS.InvokeAsync<IJSObjectReference>("import", "./sidebar-layout.js");
+        if (_disposed) { await module.DisposeAsync(); return; }
+        _layoutModule = module;
+        _layoutReference = DotNetObjectReference.Create(this);
+        var observer = await _layoutModule.InvokeAsync<IJSObjectReference>("observe", _layoutReference);
+        if (_disposed)
+        {
+            await observer.InvokeVoidAsync("dispose");
+            await observer.DisposeAsync();
+            return;
+        }
+        _layoutObserver = observer;
+        await SetMobileLayout(await _layoutObserver.InvokeAsync<bool>("matches"));
+    }
+
+    [JSInvokable]
+    public Task SetMobileLayout(bool mobile) => InvokeAsync(() =>
+    {
+        if (_disposed || _mobileLayout == mobile) return;
+        _mobileLayout = mobile;
+        StateHasChanged();
+    });
+
     private bool _menuOpen;
     private bool _logoutRequested;
     private string? FacilityName;
@@ -107,5 +144,16 @@
 
     private void OnTransitionChanged() => _ = InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Session.TransitionChanged -= OnTransitionChanged;
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        Session.TransitionChanged -= OnTransitionChanged;
+        if (_layoutObserver is not null)
+        {
+            await _layoutObserver.InvokeVoidAsync("dispose");
+            await _layoutObserver.DisposeAsync();
+        }
+        _layoutReference?.Dispose();
+        if (_layoutModule is not null) await _layoutModule.DisposeAsync();
+    }
 }
